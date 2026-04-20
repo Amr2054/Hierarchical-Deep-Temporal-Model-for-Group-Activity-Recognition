@@ -1,7 +1,7 @@
+from typing import List
 import cv2
-import glob
 import os
-from box_annot import BoxInfo
+from data_utilities import BoxInfo
 import pickle
 
 dataset_root = '../dataset'
@@ -99,7 +99,7 @@ def load_volleyball_dataset(videos_root, annot_root):
 
             clip_annot[clip_dir] = {
                 'category': clip_category_dct[clip_dir],
-                'frame_boxes_dct': frame_boxes_dct
+                'frame_boxes_dct': frame_boxes_dct # 9 frames each frame has 12 objects of box_info a box for each player
             }
 
         videos_annot[video_dir] = clip_annot
@@ -131,7 +131,7 @@ def test_pkl_version():
 if '__main__' == __name__:
 
     annot_file = f'{dataset_root}/volleyball_tracking_annotation/7/38025/38025.txt'
-    clip_dir_path = os.path.dirname(annot_file).replace('volleyball_tracking_annotation', 'videos_sample')
+    clip_dir_path = os.path.dirname(annot_file).replace('volleyball_tracking_annotation', 'videos')
 
     visualize_clip_annot(annot_file, clip_dir_path)
     create_pkl_version()
