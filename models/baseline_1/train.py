@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     # Dynamic Paths based on environment type
     videos_path = os.path.join(env['dataset_root'], config.data['videos_dir'])
-    annot_path = os.path.join(env['dataset_root'], config.data['annot_file'])
+    annot_path = os.path.join(env['annot_dir'], config.data['annot_file'])
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Training Baseline 1 on device: {device}")

@@ -22,6 +22,7 @@ def setup_environment(baseline_name="baseline_1"):
         # Route to specific baseline folder in Kaggle working dir
         base_output = f"/kaggle/working/models/{baseline_name}/outputs"
         env_config['num_workers'] = 4
+        env_config['annot_dir'] = "/kaggle/working"
     else:
         print("Detected Local Environment.")
         env_config[
@@ -29,7 +30,7 @@ def setup_environment(baseline_name="baseline_1"):
         # Route to specific baseline folder locally
         base_output = f"./models/{baseline_name}/outputs"
         env_config['num_workers'] = 4
-
+        env_config['annot_dir'] = env_config['dataset_root']
     # Create a unique run directory
     env_config['run_dir'] = os.path.join(base_output, f"run_{timestamp}")
     os.makedirs(env_config['run_dir'], exist_ok=True)

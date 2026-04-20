@@ -3,7 +3,7 @@ import cv2
 import os
 from data_utilities import BoxInfo
 import pickle
-
+from loader_utils.env_utils import setup_environment
 dataset_root = '../dataset'
 
 def create_frame_boxes_dct(path):
@@ -107,14 +107,17 @@ def load_volleyball_dataset(videos_root, annot_root):
     return videos_annot
 
 
-def create_pkl_version():
+def create_pkl_version(env):
+
     # You can use this function to create and save pkl version of the dataset
-    videos_root = f'{dataset_root}/videos'
-    annot_root = f'{dataset_root}/volleyball_tracking_annotation'
+    videos_root = os.path.join(env['dataset_root'], 'videos')
+    annot_root = os.path.join(env['dataset_root'], 'volleyball_tracking_annotation')
 
     videos_annot = load_volleyball_dataset(videos_root, annot_root)
 
-    with open(f'{dataset_root}/annot_all.pkl', 'wb') as file:
+    output_path = os.path.join(env['annot_dir'], 'annot_all.pkl')
+
+    with open(output_path, 'wb') as file:
         pickle.dump(videos_annot, file)
 
 
@@ -130,9 +133,9 @@ def test_pkl_version():
 
 if '__main__' == __name__:
 
-    annot_file = f'{dataset_root}/volleyball_tracking_annotation/7/38025/38025.txt'
-    clip_dir_path = os.path.dirname(annot_file).replace('volleyball_tracking_annotation', 'videos')
-
-    visualize_clip_annot(annot_file, clip_dir_path)
-    create_pkl_version()
-    test_pkl_version()
+    # annot_file = f'{dataset_root}/volleyball_tracking_annotation/7/38025/38025.txt'
+    # clip_dir_path = os.path.dirname(annot_file).replace('volleyball_tracking_annotation', 'videos')
+    # visualize_clip_annot(annot_file, clip_dir_path)
+    env = setup_environment(baseline_name="data_prep")
+    create_pkl_version(env)
+    # test_pkl_version()
