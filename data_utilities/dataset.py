@@ -149,3 +149,68 @@ class GroupActivityDataset(Dataset):
             players_tensor = torch.stack(player_crops)
 
             return players_tensor, label
+
+class SequenceActivityDataset(Dataset):
+    def __init__(self, videos_root, annot_path, vid_indices, transform=None, seq_length =9):
+        self.videos_root = videos_root
+        self.transform = transform
+        self.seq_length = seq_length
+        self.samples = []
+
+
+        with open(annot_path, 'rb') as file:
+
+            videos_annot = pickle.load(file)
+
+        # Iterate on each video
+        for vid_idx in vid_indices:
+            vid_idx = str(vid_idx)
+            if vid_idx not in videos_annot: continue
+
+            clips = videos_annot[vid_idx]
+            # Iterate on each clip
+            for clip_dir, clip_data in clips.items():
+                # Retrieve clip data (label,frames and boxes)
+                clip_label = group_activity_labels[clip_data['category']]
+                frame_boxes_dct = clip_data['frame_boxes_dct']
+                sorted_frame_ids = sorted(frame_boxes_dct.keys(), key=int)
+
+                frame_paths = []
+                for frame_id in sorted_frame_ids:
+                    image_path = os.path.join(self.videos_root, vid_idx, clip_dir, f'{frame_id}.jpg')
+
+                    if os.path.exists(image_path):
+                        frame_paths.append(image_path)
+
+                # 9 frames or pics paths for each clip
+                if len(frame_paths) >= self.seq_length:
+                    self.samples.append((frame_paths[:self.seq_length],clip_label))
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+
+        frame_paths, label= self.samples[idx]
+
+        clip_frames = []
+        for frame_path in frame_paths:
+            image = cv2.imread(frame_path)
+            if image is None:
+                image = np.zeros((720, 1280, 3), dtype=np.uint8)
+            else:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+            if self.transform:
+                augmented = self.transform(image=image)
+                image_tensor = augmented['image']
+            else:
+                # Failsafe if no transform is provided
+                image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float()
+
+            clip_frames.append(image_tensor)
+
+        # Shape : (9,3,244,244)
+        # dim = 0 : means stack these tensors in dimension index 0 of the shape
+        sequence_tensor = torch.stack(clip_frames,dim=0)  # before : 9 separate tensors , after : 4D tensor (frames,c,h,w)
+        return sequence_tensor, label

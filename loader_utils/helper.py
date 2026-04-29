@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import logging
 import os
+import sys
 
 class Config:
     def __init__(self, config_dict):
@@ -35,12 +36,26 @@ def set_seed(seed=42):
 def setup_logger(run_dir):
     """Creates a text file that records every print statement."""
     log_file = os.path.join(run_dir, 'training.log')
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file),
-            logging.StreamHandler() # Also prints to terminal
-        ]
-    )
-    return logging.getLogger()
+
+
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+
+    logger = logging.getLogger('training_logger')
+    logger.setLevel(logging.INFO)
+
+    # Prevent duplicate logs if the function is called twice
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # File Handler (saves to the .log file)
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    # Stream Handler (prints to the terminal)
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
+    return logger
+

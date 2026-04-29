@@ -2,13 +2,12 @@ import os
 import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
-from tqdm import tqdm
 from torch.amp import autocast, GradScaler
 from torch.utils.tensorboard import SummaryWriter
 
 
 def train_and_validate(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, run_dir, save_name,
-                       class_names=None):
+                       logger, log_interval=10, class_names=None):
     """
     Generic training and validation loop.
     Saves the best model weights, metrics and logs to the specified run directory.
@@ -18,17 +17,14 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, nu
     # Initialize the Gradient Scaler for AMP
     scaler = GradScaler('cuda')
 
-    # Initialize TensorBoard Writer
     tb_log_dir = os.path.join(run_dir, 'tensorboard_logs')
     writer = SummaryWriter(log_dir=tb_log_dir)
-
-    # Construct the exact path for the .pth file
     save_path = os.path.join(run_dir, save_name)
 
-    print(f"All outputs will be saved to: {run_dir}")
+    logger.info(f"All outputs will be saved to: {run_dir}")
 
     for epoch in range(num_epochs):
-        print(f"\n{'=' * 15} Epoch {epoch + 1}/{num_epochs} {'=' * 15}")
+        logger.info(f"\n{'=' * 15} Epoch {epoch + 1}/{num_epochs} {'=' * 15}")
 
         # --- TRAINING PHASE ---
         model.train()
@@ -36,14 +32,12 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, nu
         train_correct = 0
         train_total = 0
 
-        train_iterator = tqdm(train_loader, desc="Training", unit="batch")
 
-        for images, labels in train_iterator:
+        for i, (images, labels) in enumerate(train_loader):
             images, labels = images.to(device), labels.to(device)
 
             optimizer.zero_grad()
 
-            # Wrap forward pass in autocast
             with autocast('cuda'):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
@@ -53,12 +47,20 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, nu
             scaler.step(optimizer) # unscale gradients back to normal scale to update weights
             scaler.update()
 
-            train_loss += loss.item() * images.size(0)
+
+            batch_size = images.size(0)
+            train_loss += loss.item() * batch_size
             _, predicted = torch.max(outputs.data, 1)
             train_total += labels.size(0)
-            train_correct += (predicted == labels).sum().item()
 
-            train_iterator.set_postfix(loss=f"{loss.item():.4f}")
+            batch_correct = (predicted == labels).sum().item()
+            train_correct += batch_correct
+
+
+            if (i + 1) % log_interval == 0 or (i + 1) == len(train_loader):
+                current_acc = 100.0 * batch_correct / batch_size
+                logger.info(
+                    f"Epoch: {epoch + 1} | Batch: {i + 1}/{len(train_loader)} | Loss: {loss.item():.4f} | Acc: {current_acc:.2f}%")
 
         epoch_train_loss = train_loss / train_total
         epoch_train_acc = 100.0 * train_correct / train_total
@@ -72,13 +74,13 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, nu
         all_preds = []
         all_labels = []
 
-        val_iterator = tqdm(val_loader, desc="Validating", unit="batch")
+        logger.info("Evaluating validation set")
 
         with torch.no_grad():
-            for images, labels in val_iterator:
+
+            for images, labels in val_loader:
                 images, labels = images.to(device), labels.to(device)
 
-                # Use autocast for validation too to speed up inference
                 with autocast('cuda'):
                     outputs = model(images)
                     loss = criterion(outputs, labels)
@@ -94,9 +96,9 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, nu
         epoch_val_loss = val_loss / val_total
         epoch_val_acc = 100.0 * val_correct / val_total
 
-        # LOGGING & METRICS
-        print(f"Train Loss: {epoch_train_loss:.4f} | Train Acc: {epoch_train_acc:.2f}%")
-        print(f"Val Loss:   {epoch_val_loss:.4f} | Val Acc:   {epoch_val_acc:.2f}%")
+        # EPOCH LOGGING & METRICS
+        logger.info(f"Train Loss: {epoch_train_loss:.4f} | Train Acc: {epoch_train_acc:.2f}%")
+        logger.info(f"Val Loss:   {epoch_val_loss:.4f} | Val Acc:   {epoch_val_acc:.2f}%")
 
         # Write to TensorBoard
         writer.add_scalar('Loss/Train', epoch_train_loss, epoch)
@@ -104,20 +106,20 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, nu
         writer.add_scalar('Loss/Validation', epoch_val_loss, epoch)
         writer.add_scalar('Accuracy/Validation', epoch_val_acc, epoch)
 
-        print("\n--- Validation Metrics Breakdown ---")
-        print(classification_report(all_labels, all_preds, zero_division=0))
+        logger.info("\n Validation Metrics Breakdown")
+        # classification_report returns a string, so just pass it to the logger
+        logger.info("\n" + classification_report(all_labels, all_preds, zero_division=0))
 
         # Save the best model and plot the Confusion Matrix
         if epoch_val_acc > best_val_acc:
-            print(
+            logger.info(
                 f"** Validation accuracy improved from {best_val_acc:.2f}% to {epoch_val_acc:.2f}%. Saving model... **")
             best_val_acc = epoch_val_acc
             torch.save(model.state_dict(), save_path)
 
             # Generate Confusion Matrix
             if class_names is None:
-                # Fallback if class names aren't provided in config
-                class_names = [str(i) for i in range(len(set(all_labels)))]
+                class_names = [str(c) for c in range(len(set(all_labels)))]
 
             cm = confusion_matrix(all_labels, all_preds)
             disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)

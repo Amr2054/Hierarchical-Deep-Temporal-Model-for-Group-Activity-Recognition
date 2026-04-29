@@ -1,2 +1,2 @@
 from .box_annot import BoxInfo
-from .dataset import GroupActivityDataset,PersonActionDataset
+from .dataset import GroupActivityDataset,PersonActionDataset,SequenceActivityDataset
