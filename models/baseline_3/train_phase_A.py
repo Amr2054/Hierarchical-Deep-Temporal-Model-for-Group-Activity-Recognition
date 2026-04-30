@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # Parse terminal arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config file")
-    parser.add_argument("--epochs", type=str, required=False, help="number of epochs to train")
+    parser.add_argument("--epochs", type=int, required=False, help="number of epochs to train")
     args = parser.parse_args()
 
     # Setup Environment (Auto-detect Kaggle vs Local)
