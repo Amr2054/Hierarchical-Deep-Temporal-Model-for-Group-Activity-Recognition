@@ -71,7 +71,6 @@ class PersonActionDataset(Dataset):
 
         return cropped_image, label
 
-
 class GroupActivityDataset(Dataset):
     def __init__(self, videos_root, annot_path, vid_indices, transform=None, baseline=1, max_players=12):
         """
@@ -214,3 +213,96 @@ class SequenceActivityDataset(Dataset):
         # dim = 0 : means stack these tensors in dimension index 0 of the shape
         sequence_tensor = torch.stack(clip_frames,dim=0)  # before : 9 separate tensors , after : 4D tensor (frames,c,h,w)
         return sequence_tensor, label
+
+class PlayerSequenceActivityDataset(Dataset):
+    def __init__(self, videos_root, annot_path, vid_indices, transform=None, seq_length=9, max_players=12):
+        self.videos_root = videos_root
+        self.transform = transform
+        self.seq_length = seq_length
+        self.max_players = max_players
+        self.samples = []
+
+        with open(annot_path, 'rb') as file:
+            videos_annot = pickle.load(file)
+
+        # Iterate on each video
+        for vid_idx in vid_indices:
+            vid_idx = str(vid_idx)
+            if vid_idx not in videos_annot: continue
+
+            clips = videos_annot[vid_idx]
+            # Iterate on each clip
+            for clip_dir, clip_data in clips.items():
+                # Retrieve clip data (label,frames and boxes)
+                clip_label = group_activity_labels[clip_data['category']]
+                frame_boxes_dct = clip_data['frame_boxes_dct']
+                sorted_frame_ids = sorted(frame_boxes_dct.keys(), key=int)
+
+                frame_data_list = []
+                for frame_id in sorted_frame_ids:
+                    image_path = os.path.join(self.videos_root, vid_idx, clip_dir, f'{frame_id}.jpg')
+                    if os.path.exists(image_path):
+                        frame_data_list.append({
+                            'path': image_path,
+                            'boxes': frame_boxes_dct[frame_id], # for each frame we have 12 boxes
+                        })
+                self.samples.append((frame_data_list,clip_label))
+
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+
+        frame_data_list, label = self.samples[idx]
+
+        sequence_crops = []
+
+        for frame_data in frame_data_list:
+            image_path = frame_data['path']
+            boxes_info = frame_data['boxes']
+
+            image = cv2.imread(image_path)
+            if image is None:
+                image = np.zeros((720, 1280, 3), dtype=np.uint8)
+            else:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+            players = []
+            for box_info in boxes_info:
+                # Unpack the box
+                xmin, xmax, ymin, ymax = box_info.box
+
+                if xmax <= xmin: xmax = xmin + 1
+                if ymax <= ymin: ymax = ymin + 1
+
+                # Crop Player Image using box
+                cropped_image= image[ymin:ymax, xmin:xmax]
+
+                if self.transform:
+                    augmented = self.transform(image=cropped_image)
+                    cropped_tensor = augmented['image']
+                else:
+                    cropped_tensor = torch.from_numpy(cropped_image.transpose(2, 0, 1)).float()
+                players.append(cropped_tensor) # players at a specific frame
+
+            # Handle varying number of players (Pad with zeros or truncate to exactly 12)
+            while len(players) < self.max_players:
+                padding = players[0].shape if players else (3, 224, 224)
+                players.append(torch.zeros(padding))
+
+            players = players[:self.max_players]
+
+            # Stack the 12 players into a single tensor for this frame -> [12, 3, 224, 224]
+            frame_tensor = torch.stack(players, dim=0)
+            sequence_crops.append(frame_tensor)
+
+        # Stack the 9 frames together -> [9, 12, 3, 224, 224] (This is [Time, Players, C, H, W])
+        clip_tensor = torch.stack(sequence_crops, dim=0)
+
+        # The Dimension Flip
+        # The LSTM needs tracking per player, so it wants the Player dimension first.
+        # .permute() swaps the axes: dim 1 (Players) moves to position 0, dim 0 (Time) moves to position 1
+        final_tensor = clip_tensor.permute(1, 0, 2, 3, 4)
+
+        return final_tensor, label

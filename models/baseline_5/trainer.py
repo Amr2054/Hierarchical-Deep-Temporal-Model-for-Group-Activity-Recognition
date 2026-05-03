@@ -7,8 +7,8 @@ from torch.utils.data import DataLoader
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-from data_utilities import SequenceActivityDataset
-from models.baseline_4.model import Group_Activity_Temporal_Classifier
+from data_utilities import PlayerSequenceActivityDataset
+from models.baseline_5.model import Player_Activity_Temporal_Classifier
 from models.train_utils import train_and_validate
 from loader_utils.helper import load_config, set_seed, setup_logger
 from loader_utils.env_utils import setup_environment
@@ -34,12 +34,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Setup Environment (Auto-detect Kaggle vs Local)
-    env = setup_environment(baseline_name="baseline_4")
+    env = setup_environment(baseline_name="baseline_5")
     config = load_config(args.config)
     set_seed(42)
 
     logger = setup_logger(env['run_dir'])
-    logger.info("Starting Baseline 4 (LRCN) Training Pipeline")
+    logger.info("Starting Baseline 5 Training Pipeline")
 
     # Construct dynamic paths
     videos_path = os.path.join(env['dataset_root'], config.data['videos_dir'])
@@ -51,18 +51,18 @@ if __name__ == "__main__":
     # Data Preparation
     base_transform = get_transforms()
 
-    train_set = SequenceActivityDataset(videos_path, annot_path, config.data['video_splits']['train'], transform=base_transform,
-                                        seq_length=9)
-    val_set = SequenceActivityDataset(videos_path, annot_path, config.data['video_splits']['validation'],
-                              transform=base_transform, seq_length=9)
+    train_set = PlayerSequenceActivityDataset(videos_path, annot_path, config.data['video_splits']['train'],
+                                              transform=base_transform,seq_length=9,max_players=12)
+    val_set = PlayerSequenceActivityDataset(videos_path, annot_path, config.data['video_splits']['validation'],
+                                              transform=base_transform, seq_length=9, max_players=12)
 
     train_loader = DataLoader(train_set, batch_size=config.training['batch_size'], shuffle=True,
                               num_workers=env['num_workers'], pin_memory=True)
     val_loader = DataLoader(val_set, batch_size=config.training['batch_size'], shuffle=False,
-                            num_workers=env['num_workers'], pin_memory=True)
+                              num_workers=env['num_workers'], pin_memory=True)
 
     # Initialize Model
-    model = Group_Activity_Temporal_Classifier(
+    model = Player_Activity_Temporal_Classifier(
         num_classes=config.model['num_classes'],
         input_size=config.model['input_size'],
         hidden_size=config.model['hidden_size'],
@@ -94,4 +94,4 @@ if __name__ == "__main__":
         class_names=config.model.get('num_classes_label', None)
     )
 
-    logger.info("Baseline 4 Training Complete.")
+    logger.info("Baseline 5 Training Complete.")

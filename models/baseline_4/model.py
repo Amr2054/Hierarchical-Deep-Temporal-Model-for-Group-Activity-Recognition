@@ -46,7 +46,7 @@ class Group_Activity_Temporal_Classifier(nn.Module):
         x_temporal, (hidden,cell) = self.lstm(x_spatial) # (seq,9,hidden_size)
 
         x_total = torch.cat([x_spatial,x_temporal],dim=2) # (seq,9,hidden_size+2048)
-        x_total = x_total[:,-1, :] #(seq, hidden_size+2048)
+        x_total = x_total[:,-1, :] #(seq, hidden_size+2048) (take the last frame only)
         x_total = self.fc(x_total)
 
         return x_total
