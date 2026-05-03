@@ -60,7 +60,7 @@ class Player_Activity_Temporal_Classifier(nn.Module):
 
         # Max Pooling in players dimension
         player_combined_features = combined_features.view(batch,player,-1) # (batch,player (12), hidden_size+2048)
-        pooled_features = torch.max(player_combined_features,dim=1) # (batch, hidden_size+2048)
+        pooled_features = torch.max(player_combined_features,dim=1)[0] # (batch, hidden_size+2048)
 
         # Group Classification
         out = self.fc(pooled_features)
