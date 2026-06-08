@@ -3,8 +3,8 @@ model:
   input_size: 2048
   hidden_size: 256
   num_layers: 3
-  num_classes_label:  ["r_set", "r_spike" , "r-pass", "r_winpoint", "l_winpoint", "l-pass", "l-spike", "l_set"]
-  save_name: "best_baseline5_LSTM.pth"
+  num_classes_label: [ "Waiting", "Setting", "Digging", "Falling", "Spiking", "Blocking", "Jumping", "Moving", "Standing" ]
+  save_name: "best_baseline5_phase_A.pth"
 
 training:
   batch_size: 16

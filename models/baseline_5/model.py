@@ -1,33 +1,78 @@
 import torch
 import torch.nn as nn
 import torchvision
-from torchvision.models import resnet50
+from torchvision.models import resnet50, ResNet50_Weights
 
-class Player_Activity_Temporal_Classifier(nn.Module):
-    def __init__(self,num_classes,input_size=2048, hidden_size=256, num_layers=3):
-        super(Player_Activity_Temporal_Classifier, self).__init__()
 
-        resnet = resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT)
-        layers = list(resnet.children())[:-1]
-        self.feature_extractor = nn.Sequential(*layers)  # remove last FC layer
+class Person_Activity_Temporal_Classifier(nn.Module):
+    """ Phase A: Trains on individual players across 9 frames """
 
-        for param in self.feature_extractor.parameters():
-            param.requires_grad = False
+    def __init__(self,input_size = 2048, num_classes=9, hidden_size=256, num_layers=1):
+        super().__init__()
 
-        self.lstm = nn.LSTM( # input (seq,frames,2048) out (seq,frames,hidden_size)
-                            input_size=input_size,
-                            hidden_size=hidden_size,
-                            num_layers=num_layers,
-                            batch_first=True,
-                            dropout = 0.5 if num_layers > 1 else 0.0
-                            )
+        # Spatial Backbone
+        self.feature_extractor = nn.Sequential(
+            *list(resnet50(weights=ResNet50_Weights.DEFAULT).children())[:-1]
+        )
+
+        # Player-Level Temporal Model
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=0.5 if num_layers > 1 else 0.0
+        )
+
+        self.fc = nn.Sequential(
+            nn.Linear(hidden_size, 512),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512, num_classes)
+        )
+
+    def forward(self,x):
+        """
+        Input x shape: [Batch, Time_Steps, C, H, W]
+        """
+        batch,frame, c,h,w = x.shape
+
+        # Merge All for resnet50
+        x = x.view(batch*frame,c,h,w) # (seq * 9, 3, 244, 244)
+
+        # resnet50 Feature Extraction
+        features= self.feature_extractor(x) # (seq * 9, 2048, 1, 1)
+        features = features.view(batch * frame, -1) # (seq * 9, 2048)
+
+        # Group by player for the LSTM
+        features_sequence = features.view(batch,frame,-1) # (batch,9,2048)
+
+        # LSTM over time for each player
+        lstm_out, (hidden,cell) = self.lstm(features_sequence) # (batch,9,hidden_size)
+
+        # Grab the final temporal state
+        lstm_out = lstm_out[:, -1, :]  # (batch,Hidden) (take the last frame only)
+
+        # Classification
+        out = self.fc(lstm_out) # [batch, 9_Classes]
+        return out
+
+
+class Group_Activity_Classifier(nn.Module):
+    def __init__(self,person_feature_extraction,num_classes,hidden_size=256):
+        super(Group_Activity_Classifier, self).__init__()
+
+        self.feature_extractor = person_feature_extraction.feature_extractor
+        self.lstm = person_feature_extraction.lstm
+
+        for layer in [self.feature_extractor,self.lstm]:
+            for param in layer.parameters():
+                param.requires_grad = False
+
+        self.pool =  nn.AdaptiveMaxPool2d((1,2048)) # [Batch, 12, hidden_size] -> [Batch, 1, 2048]
 
         self.fc =  nn.Sequential(
-            nn.Linear(in_features= input_size+hidden_size,out_features= 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(in_features= 512,out_features= 128),
+            nn.Linear(in_features= hidden_size,out_features= 128),
             nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.Dropout(p=0.5),
@@ -40,10 +85,10 @@ class Player_Activity_Temporal_Classifier(nn.Module):
         """
         batch,player,frame, c,h,w = x.shape
 
-        # Merge All for CNN
+        # Merge All for resnet50
         x = x.view(batch*player*frame,c,h,w) # (seq * 12 * 9, 3, 244, 244)
 
-        # CNN Feature Extraction
+        # resnet50 Feature Extraction
         features= self.feature_extractor(x) # (seq * 12 * 9, 2048, 1, 1)
         features = features.view(batch * player * frame, -1) # (seq * 12 * 9, 2048)
 
@@ -54,14 +99,11 @@ class Player_Activity_Temporal_Classifier(nn.Module):
         lstm_out, (hidden,cell) = self.lstm(features_sequence) # (batch*12,9,hidden_size)
 
         # Grab the final temporal state & last spatial feature for each player and combine them
-        final_lstm_out = lstm_out[:, -1, :]  # (batch*12, Hidden) (take the last frame only)
-        last_cnn_feature = features_sequence [:, -1, :] # (batch*12, 2048)
-        combined_features = torch.cat([final_lstm_out,last_cnn_feature],dim=1) # (batch*12,hidden_size+2048)
+        lstm_out = lstm_out[:, -1, :]  # (batch*12, Hidden) (take the last frame only)
+        lstm_out = lstm_out.view(batch,player,-1) # (batch,12,Hidden)
 
-        # Max Pooling in players dimension
-        player_combined_features = combined_features.view(batch,player,-1) # (batch,player (12), hidden_size+2048)
-        pooled_features = torch.max(player_combined_features,dim=1)[0] # (batch, hidden_size+2048)
-
+        # Max Pooling
+        pooled_features = torch.max(lstm_out, dim=1)[0] # (batch,hidden)
         # Group Classification
         out = self.fc(pooled_features)
         return out
