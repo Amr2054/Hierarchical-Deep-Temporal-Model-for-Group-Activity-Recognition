@@ -25,10 +25,10 @@ class Person_Activity_Temporal_Classifier(nn.Module):
         )
 
         self.fc = nn.Sequential(
-            nn.Linear(hidden_size, 512),
+            nn.Linear(hidden_size, 256),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(512, num_classes)
+            nn.Linear(256, num_classes)
         )
 
     def forward(self,x):
@@ -69,12 +69,18 @@ class Group_Activity_Classifier(nn.Module):
             for param in layer.parameters():
                 param.requires_grad = False
 
-        self.fc =  nn.Sequential(
-            nn.Linear(in_features= hidden_size,out_features= 128),
+        fc_input_dim = (2048 + hidden_size) * 2
+
+        self.fc = nn.Sequential(
+            nn.Linear(in_features=fc_input_dim, out_features=512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
+            nn.Linear(in_features=512, out_features=128),
             nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.Dropout(p=0.5),
-            nn.Linear(in_features= 128, out_features= num_classes),
+            nn.Linear(in_features=128, out_features=num_classes),
         )
 
     def forward(self,x):
@@ -96,14 +102,18 @@ class Group_Activity_Classifier(nn.Module):
         # LSTM over time for each player
         lstm_out, (hidden,cell) = self.lstm(features_sequence) # (batch*12,9,hidden_size)
 
-        # Grab the final temporal state & last spatial feature for each player and combine them
-        lstm_out = lstm_out[:, -1, :]  # (batch*12, Hidden) (take the last frame only)
-        lstm_out = lstm_out.view(batch,player,-1) # (batch,12,Hidden)
+        # Grab the final temporal state & central spatial feature for each player and combine them
+        final_lstm_out = lstm_out[:, -1, :]  # (batch*12, Hidden) (take the last frame only)
+        center_cnn_feature = features_sequence[:, 4, :]  # (batch*12, 2048)
 
-        # Max Pooling
-        pooled_features = torch.max(lstm_out, dim=1)[0] # (batch,hidden)
+        combined_features = torch.cat([final_lstm_out, center_cnn_feature], dim=1)  # (batch*12, 2048 + Hidden)
+        player_combined_features = combined_features.view(batch,player,-1) # (batch,12,Hidden+2048)
+
+        max_pooled = torch.max(player_combined_features, dim=1)[0]
+        mean_pooled = torch.mean(player_combined_features, dim=1)
+
+        pooled_features = torch.cat([max_pooled, mean_pooled], dim=1) # (batch, 2 * (2048 + Hidden))
+
         # Group Classification
         out = self.fc(pooled_features)
-
-        # TODO Add concat
         return out
