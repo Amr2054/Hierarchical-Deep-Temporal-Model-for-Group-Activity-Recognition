@@ -25,10 +25,10 @@ class Person_Activity_Temporal_Classifier(nn.Module):
         )
 
         self.fc = nn.Sequential(
-            nn.Linear(hidden_size, 256),
+            nn.Linear(hidden_size, 512),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(256, num_classes)
+            nn.Linear(512, num_classes)
         )
 
     def forward(self,x):
