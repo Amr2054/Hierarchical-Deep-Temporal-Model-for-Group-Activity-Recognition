@@ -3,7 +3,6 @@ import torch.nn as nn
 import torchvision
 from torchvision.models import resnet50
 
-
 class Group_Activity_Temporal_Classifier(nn.Module):
     def __init__(self,num_classes,input_size=2048, hidden_size=256, num_layers=3):
         super(Group_Activity_Temporal_Classifier, self).__init__()
@@ -25,11 +24,13 @@ class Group_Activity_Temporal_Classifier(nn.Module):
                             hidden_size=hidden_size,
                             num_layers=num_layers,
                             batch_first=True,
-                            dropout = 0.5
+                            bidirectional=True,
+                            dropout=0.5 if num_layers > 1 else 0.0
                             )
-        
+
+        fc_input_dim = input_size + (hidden_size * 2)
         self.fc =  nn.Sequential(
-            nn.Linear(in_features= input_size+hidden_size,out_features= 512),
+            nn.Linear(in_features= input_size,out_features= 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(p=0.5),
@@ -51,10 +52,17 @@ class Group_Activity_Temporal_Classifier(nn.Module):
 
         x_temporal, (hidden,cell) = self.lstm(x_spatial) # (seq,9,hidden_size)
 
-        x_total = torch.cat([x_spatial,x_temporal],dim=2) # (seq,9,hidden_size+2048)
-        x_total = x_total[:,-1, :] #(seq, hidden_size+2048) (take the last frame only)
-        x_total = self.fc(x_total)
+        # Final temporal state
+        final_temporal = x_temporal[:, -1, :]  # (batch, 512 (hidden*2 -> bidirectional LSTM))
 
-        return x_total
+        # Center Frame Spatial Anchor (Index 4)
+        center_spatial = x_spatial[:, 4, :]  # (batch, 2048)
+
+        # combine both temporal and spatial
+        x_total = torch.cat([center_spatial, final_temporal], dim=1)  # (batch, 2560)
+
+        out = self.fc(x_total)
+
+        return out
 
 
