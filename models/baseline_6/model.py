@@ -18,15 +18,22 @@ class Group_Activity_Temporal_Classifier(nn.Module):
             param.requires_grad = False
 
         self.lstm = nn.LSTM( # input (seq,frames,2048) out (seq,frames,hidden_size)
-                            input_size=input_size,
+                            input_size=input_size * 2, # # 2048 (Max) + 2048 (Mean) = 4096
                             hidden_size=hidden_size,
                             num_layers=num_layers,
                             batch_first=True,
+                            bidirectional=True,
                             dropout = 0.5 if num_layers > 1 else 0.0
                             )
 
+        # Dimension Math for the FC Layer:
+        # Spatial Anchor: 4096 (Center Frame Max + Mean)
+        # Temporal State: 512 (BiLSTM outputs 2 * 256)
+        # Total = 4608
+        fc_input_dim = (input_size * 2) + (hidden_size * 2)
+
         self.fc =  nn.Sequential(
-            nn.Linear(in_features= input_size+hidden_size,out_features= 512),
+            nn.Linear(in_features= fc_input_dim,out_features= 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(p=0.5),
@@ -48,22 +55,24 @@ class Group_Activity_Temporal_Classifier(nn.Module):
 
         # CNN Feature Extraction
         features= self.person_feature_extractor(x) # (seq * 12 * 9, 2048, 1, 1)
-        features = features.view(batch * player * frame, -1) # (seq * 12 * 9, 2048)
-
-        # Return to original dimension
-        features = features.view(batch,player,frame,-1) # (batch,12,9,2048)
+        features = features.view(batch, player, frame, -1) # (batch, 12, 9, 2048)
 
         # Pool across the Players dimension
-        pooled_features = torch.max(features, dim=1)[0]  # (batch,9,2048)
+        max_pool = torch.max(features, dim=1)[0]  # (batch, 9, 2048)
+        mean_pool = torch.mean(features, dim=1)  # (batch, 9, 2048)
+        pooled_features = torch.cat([max_pool, mean_pool], dim=2)  # (batch, 9, 4096)
 
-        # LSTM over time for each player
+        # Temporal Tracking
         lstm_out, (hidden,cell) = self.lstm(pooled_features) # (batch,9,hidden_size)
 
-        # Grab the final temporal state & last spatial feature for each player and combine them
-        final_lstm_out = lstm_out[:, -1, :]  # (batch, Hidden) (take the last frame only)
-        last_cnn_feature = pooled_features[:, -1, :] # (batch, 2048)
-        combined_features = torch.cat([final_lstm_out,last_cnn_feature],dim=1) # (batch,hidden_size+2048)
+        # Grab the final temporal state & central spatial features and combine them
+        final_lstm_out = lstm_out[:, -1, :]  # (batch, 512)
+        center_cnn_feature = pooled_features[:, 4, :]  # (batch, 4096)
 
-        # Group Classification
+        # Combine Spatial and Temporal
+        combined_features = torch.cat([final_lstm_out, center_cnn_feature], dim=1)  # (batch, 4608)
+
+        # 5. Group Classification
         out = self.fc(combined_features)
         return out
+
