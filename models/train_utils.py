@@ -4,7 +4,31 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 from torch.amp import autocast, GradScaler
 from torch.utils.tensorboard import SummaryWriter
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=2.0, alpha=None):
+        super().__init__()
+        self.gamma = gamma
+        self.alpha = None
+
+        if alpha is not None:
+            self.alpha = alpha.clone().detach() if isinstance(alpha, torch.Tensor) else torch.tensor(
+                alpha).clone().detach()
+            self.alpha.requires_grad_(True)
+
+    def forward(self, inputs, targets):
+        ce_loss = nn.CrossEntropyLoss(reduction='none')(inputs, targets)
+        pt = torch.exp(-ce_loss)
+        focal_loss = ((1 - pt) ** self.gamma) * ce_loss
+
+        if self.alpha is not None:
+            alpha = self.alpha.to(targets.device)
+            focal_loss = alpha[targets] * focal_loss
+
+        return focal_loss.mean()
 
 def train_and_validate(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, run_dir, save_name,
                        logger, log_interval=10, class_names=None):

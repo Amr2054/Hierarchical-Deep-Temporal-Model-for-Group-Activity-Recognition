@@ -9,7 +9,7 @@ from albumentations.pytorch import ToTensorV2
 
 from data_utilities import SequenceActivityDataset
 from models.baseline_4.model import Group_Activity_Temporal_Classifier
-from models.train_utils import train_and_validate
+from models.train_utils import train_and_validate, FocalLoss
 from loader_utils.helper import load_config, set_seed, setup_logger
 from loader_utils.env_utils import setup_environment
 
@@ -76,8 +76,9 @@ if __name__ == "__main__":
         num_layers=config.model['num_layers']
     ).to(device)
 
-    criterion = nn.CrossEntropyLoss()
-
+    # criterion = nn.CrossEntropyLoss()
+    criterion = FocalLoss(gamma=2.0)
+    
     # We only pass trainable parameters to the optimizer
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = optim.Adam(trainable_params, lr=config.training['learning_rate'])
