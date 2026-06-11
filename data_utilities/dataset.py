@@ -214,6 +214,95 @@ class SequenceActivityDataset(Dataset):
         sequence_tensor = torch.stack(clip_frames,dim=0)  # before : 9 separate tensors , after : 4D tensor (frames,c,h,w)
         return sequence_tensor, label
 
+class PlayerSequenceActivityDataset(Dataset):
+    """
+    Dataset for Phase A:
+    Extracts a temporal sequence (9 frames) of a SINGLE player.
+    Assigns the label from the Anchor Keyframe (the middle frame).
+    Output: [Seq_Len, Channels, Height, Width], Label
+    """
+
+    def __init__(self, videos_root, annot_path, vid_indices, transform=None, seq_length=9):
+        self.videos_root = videos_root
+        self.transform = transform
+        self.seq_length = seq_length
+        self.samples = []
+
+        with open(annot_path, 'rb') as file:
+            videos_annot = pickle.load(file)
+
+        for vid_idx in vid_indices:
+            vid_idx = str(vid_idx)
+            if vid_idx not in videos_annot: continue
+
+            clips = videos_annot[vid_idx]
+
+            for clip_dir, clip_data in clips.items():
+                frame_boxes_dct = clip_data['frame_boxes_dct']
+                sorted_frame_ids = sorted(frame_boxes_dct.keys(), key=int)
+
+                # Group boxes by player_ID to track individuals over time
+                player_tracks = {i: [] for i in range(12)}
+
+                for frame_id in sorted_frame_ids:
+                    image_path = os.path.join(self.videos_root, vid_idx, clip_dir, f'{frame_id}.jpg')
+                    if not os.path.exists(image_path):
+                        continue
+
+                    for box_info in frame_boxes_dct[frame_id]:
+                        if box_info.player_ID < 12:
+                            player_tracks[box_info.player_ID].append({
+                                'path': image_path,
+                                'box': box_info.box,
+                                'category': box_info.category
+                            })
+
+                # Validate and save sequences that have the full 9 frames
+                for player_id, track in player_tracks.items():
+                    if len(track) >= self.seq_length:
+
+                        # Extract the Anchor Keyframe label (the middle frame)
+                        center_idx = self.seq_length // 2  # For 9 frames, this is index 4
+                        label_str = track[center_idx]['category'].lower()
+
+                        person_label = person_activity_labels[label_str]
+
+                        self.samples.append((track[:self.seq_length], person_label))
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        track_data, label = self.samples[idx]
+
+        sequence_crops = []
+
+        for frame_data in track_data:
+            image = cv2.imread(frame_data['path'])
+            if image is None:
+                image = np.zeros((720, 1280, 3), dtype=np.uint8)
+            else:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+            xmin, xmax, ymin, ymax = frame_data['box']
+            if xmax <= xmin: xmax = xmin + 1
+            if ymax <= ymin: ymax = ymin + 1
+
+            cropped_image = image[ymin:ymax, xmin:xmax]
+
+            if self.transform:
+                augmented = self.transform(image=cropped_image)
+                cropped_tensor = augmented['image']
+            else:
+                cropped_tensor = torch.from_numpy(cropped_image.transpose(2, 0, 1)).float()
+
+            sequence_crops.append(cropped_tensor)
+
+        # Stack the 9 frames together -> [9, 3, 224, 224]
+        sequence_tensor = torch.stack(sequence_crops, dim=0)
+
+        return sequence_tensor, label
+
 class PlayerGroupActivityDataset(Dataset):
     def __init__(self, videos_root, annot_path, vid_indices, transform=None, seq_length=9, max_players=12):
         self.videos_root = videos_root
@@ -308,91 +397,118 @@ class PlayerGroupActivityDataset(Dataset):
         return final_tensor, label
 
 
-class PlayerSequenceActivityDataset(Dataset):
+
+
+class PlayerGroupActivityDataset_B8(Dataset):
     """
-    Dataset for Phase A:
-    Extracts a temporal sequence (9 frames) of a SINGLE player.
-    Assigns the label from the Anchor Keyframe (the middle frame).
-    Output: [Seq_Len, Channels, Height, Width], Label
+    Dedicated Dataset for Baseline 8.
+    Crucial Difference: Sorts players geographically (Left-to-Right) based on
+    an Anchor Frame (center frame) to guarantee the Left Team is always indices 0-5
+    and the Right Team is always indices 6-11, without breaking temporal tracking.
     """
 
-    def __init__(self, videos_root, annot_path, vid_indices, transform=None, seq_length=9):
+    def __init__(self, videos_root, annot_path, vid_indices, transform=None, seq_length=9, max_players=12):
         self.videos_root = videos_root
         self.transform = transform
         self.seq_length = seq_length
+        self.max_players = max_players
         self.samples = []
 
         with open(annot_path, 'rb') as file:
             videos_annot = pickle.load(file)
 
+        # Iterate on each video
         for vid_idx in vid_indices:
             vid_idx = str(vid_idx)
             if vid_idx not in videos_annot: continue
 
             clips = videos_annot[vid_idx]
-
+            # Iterate on each clip
             for clip_dir, clip_data in clips.items():
+                clip_label = group_activity_labels[clip_data['category']]
                 frame_boxes_dct = clip_data['frame_boxes_dct']
                 sorted_frame_ids = sorted(frame_boxes_dct.keys(), key=int)
 
-                # Group boxes by player_ID to track individuals over time
-                player_tracks = {i: [] for i in range(12)}
-
+                frame_data_list = []
                 for frame_id in sorted_frame_ids:
                     image_path = os.path.join(self.videos_root, vid_idx, clip_dir, f'{frame_id}.jpg')
-                    if not os.path.exists(image_path):
-                        continue
+                    if os.path.exists(image_path):
+                        frame_data_list.append({
+                            'path': image_path,
+                            'boxes': frame_boxes_dct[frame_id],
+                        })
 
-                    for box_info in frame_boxes_dct[frame_id]:
-                        if box_info.player_ID < 12:
-                            player_tracks[box_info.player_ID].append({
-                                'path': image_path,
-                                'box': box_info.box,
-                                'category': box_info.category
-                            })
-
-                # Validate and save sequences that have the full 9 frames
-                for player_id, track in player_tracks.items():
-                    if len(track) >= self.seq_length:
-
-                        # Extract the Anchor Keyframe label (the middle frame)
-                        center_idx = self.seq_length // 2  # For 9 frames, this is index 4
-                        label_str = track[center_idx]['category'].lower()
-
-                        person_label = person_activity_labels[label_str]
-
-                        self.samples.append((track[:self.seq_length], person_label))
+                # Only append if we have exactly the sequence length expected
+                if len(frame_data_list) == self.seq_length:
+                    self.samples.append((frame_data_list, clip_label))
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        track_data, label = self.samples[idx]
+        frame_data_list, label = self.samples[idx]
 
         sequence_crops = []
 
-        for frame_data in track_data:
-            image = cv2.imread(frame_data['path'])
+
+        # Grab the center frame (index 4 out of 9) to determine team sides
+        anchor_idx = self.seq_length // 2
+        center_boxes = frame_data_list[anchor_idx]['boxes']
+
+        # Sort the center frame boxes geographically (left-to-right by xmin)
+        sorted_center_boxes = sorted(center_boxes, key=lambda info: info.box[0])
+
+        # Create a strict mapping: player_ID -> geographic slot (0 to 11)
+        player_id_to_slot = {}
+        for slot_idx, box_info in enumerate(sorted_center_boxes):
+            if slot_idx < self.max_players:
+                # Indices 0-5 = Left Team. Indices 6-11 = Right Team.
+                player_id_to_slot[box_info.player_ID] = slot_idx
+
+        for frame_data in frame_data_list:
+            image_path = frame_data['path']
+            boxes_info = frame_data['boxes']
+
+            image = cv2.imread(image_path)
             if image is None:
                 image = np.zeros((720, 1280, 3), dtype=np.uint8)
             else:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            xmin, xmax, ymin, ymax = frame_data['box']
-            if xmax <= xmin: xmax = xmin + 1
-            if ymax <= ymin: ymax = ymin + 1
+            # Initialize 12 empty slots (black images) for this frame
+            padding_shape = (3, 224, 224)
+            players = [torch.zeros(padding_shape) for _ in range(self.max_players)]
 
-            cropped_image = image[ymin:ymax, xmin:xmax]
+            for box_info in boxes_info:
+                # Look up this player's permanent slot
+                slot_idx = player_id_to_slot.get(box_info.player_ID, None)
 
-            if self.transform:
-                augmented = self.transform(image=cropped_image)
-                cropped_tensor = augmented['image']
-            else:
-                cropped_tensor = torch.from_numpy(cropped_image.transpose(2, 0, 1)).float()
+                # If they were mapped to a slot in the anchor frame, process them
+                if slot_idx is not None:
+                    xmin, xmax, ymin, ymax = box_info.box
 
-            sequence_crops.append(cropped_tensor)
+                    if xmax <= xmin: xmax = xmin + 1
+                    if ymax <= ymin: ymax = ymin + 1
 
-        # Stack the 9 frames together -> [9, 3, 224, 224]
-        sequence_tensor = torch.stack(sequence_crops, dim=0)
+                    cropped_image = image[ymin:ymax, xmin:xmax]
 
-        return sequence_tensor, label
+                    if self.transform:
+                        augmented = self.transform(image=cropped_image)
+                        cropped_tensor = augmented['image']
+                    else:
+                        cropped_tensor = torch.from_numpy(cropped_image.transpose(2, 0, 1)).float()
+
+                    # Place the player in their permanently assigned geographic slot
+                    players[slot_idx] = cropped_tensor
+
+            # Stack the 12 players into a single tensor for this frame -> [12, 3, 224, 224]
+            frame_tensor = torch.stack(players, dim=0)
+            sequence_crops.append(frame_tensor)
+
+        # Stack the 9 frames together -> [9, 12, 3, 224, 224]
+        clip_tensor = torch.stack(sequence_crops, dim=0)
+
+        # Permute to [Players, Time, C, H, W] -> [12, 9, 3, 224, 224]
+        final_tensor = clip_tensor.permute(1, 0, 2, 3, 4)
+
+        return final_tensor, label
