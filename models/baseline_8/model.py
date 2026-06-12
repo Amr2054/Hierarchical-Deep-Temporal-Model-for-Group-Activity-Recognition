@@ -91,7 +91,7 @@ class Full_Hierarchical_Model_B8(nn.Module):
         court_sequence = self.team_norm(court_sequence)
 
         # Group Temporal Tracking (LSTM 2)
-        lstm_out_2, (hidden, cell) = self.lstm2(court_sequence)
+        lstm_out_2, (hidden, cell) = self.lstm_2(court_sequence)
 
         # Team Spatial Anchor + Final Classification
         final_temporal = lstm_out_2[:, -1, :]  # (batch, 512)
