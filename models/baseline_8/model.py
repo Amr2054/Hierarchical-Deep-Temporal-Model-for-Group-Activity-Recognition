@@ -61,7 +61,7 @@ class Full_Hierarchical_Model_B8(nn.Module):
         x = x.view(batch * player * frame, c, h, w)  # (batch * 12 * 9, 3, 244, 244)
 
         # CNN Feature Extraction
-        cnn_features = self.feature_extractor(x)  # (batch * 12 * 9, 2048, 1, 1)
+        cnn_features = self.person_feature_extractor(x)  # (batch * 12 * 9, 2048, 1, 1)
         cnn_features = cnn_features.view(batch * player, frame, -1)  # (batch * 12 , 9, 2048)
 
         # LSTM over time for each player
