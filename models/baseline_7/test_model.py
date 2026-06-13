@@ -8,7 +8,8 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
 from data import PlayerGroupActivityDataset
-from models.baseline_5.model import Person_Activity_Temporal_Classifier,Group_Activity_Classifier
+from models.baseline_5.model import Person_Activity_Temporal_Classifier
+from models.baseline_7.model import  Full_Hierarchical_Model
 
 from models import evaluate_test_set
 from utils import load_config, set_seed, setup_logger,setup_environment
@@ -23,19 +24,19 @@ def get_test_transform():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate Baseline 5 on the Test Set")
+    parser = argparse.ArgumentParser(description="Evaluate Baseline 7 on the Test Set")
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config file")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to the trained .pth checkpoint")
     parser.add_argument("--person_weights", type=str, required=False, help="Path to Phase A weights")
     args = parser.parse_args()
 
     # Environment Setup
-    env = setup_environment(baseline_name="baseline_5_test")
+    env = setup_environment(baseline_name="baseline_7_test")
     config = load_config(args.config)
     set_seed(42)
 
     logger = setup_logger(env['run_dir'])
-    logger.info(" Starting Baseline 5 Test Evaluation Pipeline")
+    logger.info(" Starting Baseline 7 Test Evaluation Pipeline")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -65,15 +66,19 @@ if __name__ == "__main__":
     person_model = Person_Activity_Temporal_Classifier(
         input_size=config.model['input_size'],
         num_classes=config.model['num_person_classes'],
-        hidden_size=config.model['hidden_size'],
-        num_layers=config.model['num_layers']
+        hidden_size=config.model['hidden_person_size'],
+        num_layers=config.model['num_person_layers']
     )
     checkpoint = torch.load(args.person_weights, map_location=device)
     person_model.load_state_dict(checkpoint['model_state_dict'])
 
-    model = Group_Activity_Classifier(
-        person_feature_extraction=person_model,
-        num_classes=config.model['num_classes']
+    model = Full_Hierarchical_Model(
+        person_classifier=person_model,
+        num_classes=config.model['num_classes'],
+        input_size=config.model['input_size'],
+        hidden1_size=config.model['hidden1_size'],
+        hidden2_size=config.model['hidden2_size'],
+        num_layers=config.model['num_layers']
     ).to(device)
 
     criterion = nn.CrossEntropyLoss()

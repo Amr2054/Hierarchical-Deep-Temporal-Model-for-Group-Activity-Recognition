@@ -15,13 +15,19 @@ def setup_environment(baseline_name="baseline_1"):
     env_config = {}
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
+    parts = baseline_name.split('_')
+    if len(parts) >= 2 and parts[0].lower() == 'baseline':
+        core_folder = f"{parts[0].lower()}_{parts[1]}"  # Normalizes to "baseline_x"
+    else:
+        core_folder = baseline_name
+
     if is_kaggle():
         print("Detected Kaggle Environment.")
         mp.set_start_method('spawn', force=True)
         env_config['dataset_root'] = "/kaggle/input/datasets/ahmedmohamed365/volleyball"
 
         # Route to specific baseline folder in Kaggle working dir
-        base_output = f"/kaggle/working/Hierarchical-Deep-Temporal-Model-for-Group-Activity-Recognition/models/{baseline_name}/outputs"
+        base_output = f"/kaggle/working/Hierarchical-Deep-Temporal-Model-for-Group-Activity-Recognition/models/{core_folder}/outputs"
         env_config['num_workers'] = 4
         env_config['annot_dir'] = "/kaggle/working"
 
@@ -35,7 +41,7 @@ def setup_environment(baseline_name="baseline_1"):
             'dataset_root'] = "/home/amr/Study/Volley Ball Project/A Hierarchical Deep Temporal Model for Group Activity Recognition/dataset"
 
         # Route to specific baseline folder locally
-        base_output = f"./models/{baseline_name}/outputs"
+        base_output = f"./models/{core_folder}/outputs"
         env_config['num_workers'] = 4
         env_config['annot_dir'] = env_config['dataset_root']
 

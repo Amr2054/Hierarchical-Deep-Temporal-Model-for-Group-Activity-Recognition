@@ -41,7 +41,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Environment Setup
-    env = setup_environment(baseline_name="baseline_5")
+    env = setup_environment(baseline_name="baseline_5_phase_B")
     config = load_config(args.config)
     set_seed(42)
 
