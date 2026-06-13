@@ -1,4 +1,8 @@
-
+"""
+Baseline 5: This baseline is a temporal extension of the
+third baseline phase A where individual person features are passed to LSTM
+then pooled over all people to recognize group activities.
+"""
 import torch
 import torch.nn as nn
 from torchvision.models import resnet50, ResNet50_Weights

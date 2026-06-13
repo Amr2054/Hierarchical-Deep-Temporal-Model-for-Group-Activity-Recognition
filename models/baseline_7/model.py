@@ -1,7 +1,11 @@
+"""
+Baseline 7: Full model V1
+Person level feature extraction + LSTM_1 then pooled all
+over people then LSTM_2 to find group level activity
+"""
+
 import torch
 import torch.nn as nn
-import torchvision
-from torchvision.models import resnet50
 
 class Full_Hierarchical_Model(nn.Module):
     def __init__(self, person_classifier, num_classes=8,input_size=2048, hidden1_size=256, hidden2_size=256, num_layers=1):
@@ -24,7 +28,7 @@ class Full_Hierarchical_Model(nn.Module):
         # Max + Mean Pooling across players = 4608 features per team per frame
         team_feature_size = (input_size + hidden1_size) * 2
 
-        self.lstm_2 = nn.LSTM( # input (seq,frames,2048) out (seq,frames,hidden_size)
+        self.lstm_2 = nn.LSTM(
                             input_size=team_feature_size,
                             hidden_size=hidden2_size,
                             num_layers=num_layers,

@@ -399,7 +399,7 @@ class PlayerGroupActivityDataset(Dataset):
 class PlayerGroupActivityDataset_B8(Dataset):
     """
     Dedicated Dataset for Baseline 8.
-    Crucial Difference: Sorts players geographically (Left-to-Right) based on
+    Sorts players geographically (Left-to-Right) based on
     an Anchor Frame (center frame) to guarantee the Left Team is always indices 0-5
     and the Right Team is always indices 6-11, without breaking temporal tracking.
     """

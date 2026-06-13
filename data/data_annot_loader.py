@@ -133,9 +133,6 @@ def test_pkl_version():
 
 if '__main__' == __name__:
 
-    # annot_file = f'{dataset_root}/volleyball_tracking_annotation/7/38025/38025.txt'
-    # clip_dir_path = os.path.dirname(annot_file).replace('volleyball_tracking_annotation', 'videos')
-    # visualize_clip_annot(annot_file, clip_dir_path)
     env = setup_environment(baseline_name="data_prep")
     create_pkl_version(env)
     # test_pkl_version()

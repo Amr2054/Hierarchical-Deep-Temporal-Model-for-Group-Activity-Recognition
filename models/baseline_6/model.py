@@ -1,6 +1,9 @@
+"""
+Baseline 6: This model apply feature extraction on fine-tuned
+person-level action classifier then pools all people and
+apply LSTM to learn group activity
+"""
 import torch.nn as nn
-import torchvision
-from torchvision.models import resnet50
 import torch
 
 
@@ -9,8 +12,6 @@ class Group_Activity_Temporal_Classifier(nn.Module):
         super(Group_Activity_Temporal_Classifier, self).__init__()
 
         self.person_feature_extractor_fc_in = person_classifier.in_features
-        print(f"Person feature extractor output dimension: {self.person_feature_extractor_fc_in}")
-
         layers = list(person_classifier.backbone.children())[:-1]
         self.person_feature_extractor = nn.Sequential(*layers)  # remove last FC layer
 
@@ -18,7 +19,7 @@ class Group_Activity_Temporal_Classifier(nn.Module):
             param.requires_grad = False
 
         self.lstm = nn.LSTM( # input (seq,frames,2048) out (seq,frames,hidden_size)
-                            input_size=input_size * 2, # # 2048 (Max) + 2048 (Mean) = 4096
+                            input_size=input_size * 2, # 2048 (Max) + 2048 (Mean) = 4096
                             hidden_size=hidden_size,
                             num_layers=num_layers,
                             batch_first=True,
@@ -28,8 +29,8 @@ class Group_Activity_Temporal_Classifier(nn.Module):
 
         # Dimension Math for the FC Layer:
         # Spatial Anchor: 4096 (Center Frame Max + Mean)
-        # Temporal State: 512 (BiLSTM outputs 2 * 256)
-        # Total = 4608
+        # Temporal State: (BiLSTM outputs 2 * hidden_size)
+
         fc_input_dim = (input_size * 2) + (hidden_size * 2)
 
         self.fc =  nn.Sequential(
@@ -51,10 +52,10 @@ class Group_Activity_Temporal_Classifier(nn.Module):
         batch,player,frame, c,h,w = x.shape
 
         # Merge All for CNN
-        x = x.view(batch*player*frame,c,h,w) # (seq * 12 * 9, 3, 244, 244)
+        x = x.view(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
 
         # CNN Feature Extraction
-        features= self.person_feature_extractor(x) # (seq * 12 * 9, 2048, 1, 1)
+        features= self.person_feature_extractor(x) # (batch * 12 * 9, 2048, 1, 1)
         features = features.view(batch, player, frame, -1) # (batch, 12, 9, 2048)
 
         # Pool across the Players dimension
@@ -66,13 +67,13 @@ class Group_Activity_Temporal_Classifier(nn.Module):
         lstm_out, (hidden,cell) = self.lstm(pooled_features) # (batch,9,hidden_size)
 
         # Grab the final temporal state & central spatial features and combine them
-        final_lstm_out = lstm_out[:, -1, :]  # (batch, 512)
+        final_lstm_out = lstm_out[:, -1, :]  # (batch, hidden_size*2)
         center_cnn_feature = pooled_features[:, 4, :]  # (batch, 4096)
 
         # Combine Spatial and Temporal
-        combined_features = torch.cat([final_lstm_out, center_cnn_feature], dim=1)  # (batch, 4608)
+        combined_features = torch.cat([final_lstm_out, center_cnn_feature], dim=1)  # (batch, 4096 + hidden_size*2)
 
-        # 5. Group Classification
+        # Group Classification
         out = self.fc(combined_features)
         return out
 

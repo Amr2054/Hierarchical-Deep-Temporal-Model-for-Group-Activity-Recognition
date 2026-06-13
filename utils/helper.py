@@ -36,8 +36,6 @@ def set_seed(seed=42):
 def setup_logger(run_dir):
     """Creates a text file that records every print statement."""
     log_file = os.path.join(run_dir, 'training.log')
-
-
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
     logger = logging.getLogger('training_logger')
