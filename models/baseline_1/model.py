@@ -13,12 +13,6 @@ class ResNet50FineTuner(nn.Module):
         super(ResNet50FineTuner, self).__init__()
         self.backbone = resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT)
 
-        # Freezing All layers except last layer
-        for param in self.backbone.parameters():
-            param.requires_grad = False
-        for param in self.backbone.layer4.parameters():
-            param.requires_grad = True
-
         fc_input_dim = self.backbone.fc.in_features
         self.backbone.fc = nn.Linear(fc_input_dim, num_classes)
 

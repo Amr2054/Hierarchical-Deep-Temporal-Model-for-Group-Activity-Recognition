@@ -4,10 +4,10 @@ model:
   save_name: "best_baseline1.pth"
 
 training:
-  batch_size: 256
+  batch_size: 64
   learning_rate: 0.0001
   epochs: 5
-  weight_decay: 1
+  weight_decay: 0.01
   early_stop_patience: 5
 
 data:
