@@ -1,6 +1,6 @@
+
 import torch
 import torch.nn as nn
-import torchvision
 from torchvision.models import resnet50, ResNet50_Weights
 
 
@@ -10,7 +10,6 @@ class Person_Activity_Temporal_Classifier(nn.Module):
     def __init__(self,input_size = 2048, num_classes=9, hidden_size=256, num_layers=1):
         super().__init__()
 
-        # Spatial Backbone
         self.feature_extractor = nn.Sequential(
             *list(resnet50(weights=ResNet50_Weights.DEFAULT).children())[:-1]
         )
@@ -38,11 +37,11 @@ class Person_Activity_Temporal_Classifier(nn.Module):
         batch,frame, c,h,w = x.shape
 
         # Merge All for resnet50
-        x = x.view(batch*frame,c,h,w) # (seq * 9, 3, 244, 244)
+        x = x.view(batch*frame,c,h,w) # (batch * 9, 3, 244, 244)
 
         # resnet50 Feature Extraction
-        features= self.feature_extractor(x) # (seq * 9, 2048, 1, 1)
-        features = features.view(batch * frame, -1) # (seq * 9, 2048)
+        features= self.feature_extractor(x) # (batch * 9, 2048, 1, 1)
+        features = features.view(batch * frame, -1) # (batch * 9, 2048)
 
         # Group by player for the LSTM
         features_sequence = features.view(batch,frame,-1) # (batch,9,2048)
@@ -54,7 +53,7 @@ class Person_Activity_Temporal_Classifier(nn.Module):
         lstm_out = lstm_out[:, -1, :]  # (batch,Hidden) (take the last frame only)
 
         # Classification
-        out = self.fc(lstm_out) # [batch, 9_Classes]
+        out = self.fc(lstm_out) # (batch, 9_Classes)
         return out
 
 
@@ -90,14 +89,11 @@ class Group_Activity_Classifier(nn.Module):
         batch,player,frame, c,h,w = x.shape
 
         # Merge All for resnet50
-        x = x.view(batch*player*frame,c,h,w) # (seq * 12 * 9, 3, 244, 244)
+        x = x.view(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
 
         # resnet50 Feature Extraction
-        features= self.feature_extractor(x) # (seq * 12 * 9, 2048, 1, 1)
-        features = features.view(batch * player * frame, -1) # (seq * 12 * 9, 2048)
-
-        # Group by player for the LSTM
-        features_sequence = features.view(batch*player,frame,-1) # (batch*12,9,2048)
+        features= self.feature_extractor(x) # (batch * 12 * 9, 2048, 1, 1)
+        features_sequence = features.view(batch * player,frame, -1) # (batch * 12, 9, 2048)
 
         # LSTM over time for each player
         lstm_out, (hidden,cell) = self.lstm(features_sequence) # (batch*12,9,hidden_size)

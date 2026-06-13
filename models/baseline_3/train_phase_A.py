@@ -11,9 +11,8 @@ from albumentations.pytorch import ToTensorV2
 
 from data import PersonActionDataset
 from models.baseline_3.model import PersonLevelClassifier
-from models.train_utils import train_and_validate, print_model_summary
-from utils import load_config ,setup_environment
-from utils.helper import set_seed,setup_logger
+from models import train_and_validate, print_model_summary
+from utils import load_config ,setup_environment, calculate_balanced_weights, set_seed,setup_logger
 
 def get_transforms():
     train_transform = A.Compose([
@@ -48,28 +47,28 @@ def get_transforms():
 
 
 if __name__ == "__main__":
-    # Parse terminal arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config file")
     parser.add_argument("--epochs", type=int, required=False, help="number of epochs to train")
     args = parser.parse_args()
 
-    # Setup Environment (Auto-detect Kaggle vs Local)
+    # Environment setup
     env = setup_environment(baseline_name="baseline_3")
     config = load_config(args.config)
     set_seed(42)
 
+    # Initialize Logger
     logger = setup_logger(env['run_dir'])
     logger.info("Starting Baseline 3 Phase_A Training Pipeline")
 
-    # Construct dynamic paths
+    # Dynamic Paths based on environment type
     videos_path = os.path.join(env['dataset_root'], config.data['videos_dir'])
     annot_path = os.path.join(env['annot_dir'], config.data['annot_file'])
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Training on device: {device}")
 
-    # Prepare Data
+    # Prepare Data for model
     train_transform, val_transform = get_transforms()
 
     train_set = PersonActionDataset(videos_path, annot_path, config.data['video_splits']['train'],
@@ -82,45 +81,38 @@ if __name__ == "__main__":
     val_loader = DataLoader(val_set, batch_size=config.training['batch_size'], shuffle=False,
                             num_workers=env['num_workers'], pin_memory=True)
 
-    # Initialize Model & Optimizer
+    # Initialize Model, Loss, Optimizer
     model = PersonLevelClassifier(num_classes=config.model['num_classes']).to(device)
     print_model_summary(model)
 
+    # Dynamic Class Weighting
     logger.info("Calculating dynamic class weights to combat imbalance")
-
-
-    all_train_labels = [sample[2] for sample in train_set.samples]
-    class_counts = np.bincount(all_train_labels)
-    total_samples = len(all_train_labels)
-    num_classes = len(class_counts)
-    logger.info(f"Class distribution in training set: {class_counts}")
-
-    # Calculate balanced weights
-    # Formula: total_samples / (num_classes * count_for_this_class)
-    class_weights = total_samples / (num_classes * class_counts)
+    class_weights = calculate_balanced_weights(train_set=train_set,min_length=config.model['num_classes'])
     weights_tensor = torch.FloatTensor(class_weights).to(device)
+
     logger.info(f"Applied Class Weights: {np.round(class_weights, 3)}")
     criterion = nn.CrossEntropyLoss(weight=weights_tensor)
 
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = optim.Adam(trainable_params, lr=config.training['learning_rate'])
+    optimizer = optim.AdamW(trainable_params, lr=config.training['learning_rate'],
+                            weight_decay=config.training['weight_decay'])
 
     logger.info("Initializing training loop")
+    num_epochs = args.epochs if args.epochs else config.training['epochs']
 
-    # Training
+    # Training Model
     best_model = train_and_validate(
         model=model,
         train_loader=train_loader,
         val_loader=val_loader,
         criterion=criterion,
         optimizer=optimizer,
-        # num_epochs=config.training['epochs'],
-        num_epochs=args.epochs,
+        num_epochs=num_epochs,
         device=device,
         run_dir=env['run_dir'],
         save_name=config.model['save_name'],
         logger=logger,
-        log_interval=10,
-        class_names=config.model.get('num_classes_label', None)
+        class_names=config.model.get('num_classes_label', None),
+        early_stop_patience=config.training['early_stop_patience'],
     )
-    logger.info("Training Pipeline Complete")
+    logger.info("Baseline 3 Phase A Training Complete!")

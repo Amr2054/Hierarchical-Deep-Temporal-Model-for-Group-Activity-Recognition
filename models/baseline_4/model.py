@@ -1,23 +1,23 @@
+"""
+Baseline 4:
+This baseline is a temporal extension of the first baseline.
+It feeds image level features directly to a LSTM
+model to recognize group activities.
+"""
+
 import torch
 import torch.nn as nn
 import torchvision
-from torchvision.models import resnet50
+from torchvision.models import resnet50, ResNet50_Weights
 
 class Group_Activity_Temporal_Classifier(nn.Module):
     def __init__(self,num_classes,input_size=2048, hidden_size=256, num_layers=3):
         super(Group_Activity_Temporal_Classifier, self).__init__()
 
-        image_feature_extractor = resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT)
-
-        # for param in image_feature_extractor.parameters():
-        #     param.requires_grad = False
-        #
-        # for param in image_feature_extractor.layer4.parameters():
-        #     param.requires_grad = True
+        image_feature_extractor = resnet50(weights=ResNet50_Weights.DEFAULT)
 
         layers = list(image_feature_extractor.children())[:-1]
         self.feature_extractor = nn.Sequential(*layers)  # remove last FC layer
-
 
         self.lstm = nn.LSTM( # input (seq,frames,2048) out (seq,frames,hidden_size)
                             input_size=input_size,
@@ -53,13 +53,13 @@ class Group_Activity_Temporal_Classifier(nn.Module):
         x_temporal, (hidden,cell) = self.lstm(x_spatial) # (seq,9,hidden_size)
 
         # Final temporal state
-        final_temporal = x_temporal[:, -1, :]  # (batch, 512 (hidden*2 -> bidirectional LSTM))
+        final_temporal = x_temporal[:, -1, :]  # (batch,(hidden*2) -> bidirectional LSTM))
 
         # Center Frame Spatial Anchor (Index 4)
         center_spatial = x_spatial[:, 4, :]  # (batch, 2048)
 
         # combine both temporal and spatial
-        x_total = torch.cat([center_spatial, final_temporal], dim=1)  # (batch, 2560)
+        x_total = torch.cat([center_spatial, final_temporal], dim=1)  # (batch, (hidden*2) + 2048)
 
         out = self.fc(x_total)
 

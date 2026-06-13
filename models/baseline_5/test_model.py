@@ -26,7 +26,7 @@ def get_test_transform():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate Baseline 8 on the Test Set")
+    parser = argparse.ArgumentParser(description="Evaluate Baseline 5 on the Test Set")
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config file")
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to the trained .pth checkpoint")
     parser.add_argument("--person_weights", type=str, required=False,
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Environment Setup
-    env = setup_environment(baseline_name="baseline_8_evaluation")
+    env = setup_environment(baseline_name="baseline_5_evaluation")
     config = load_config(args.config)
     set_seed(42)
 

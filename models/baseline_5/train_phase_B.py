@@ -45,12 +45,15 @@ if __name__ == "__main__":
     config = load_config(args.config)
     set_seed(42)
 
+    # Initialize Logger
     logger = setup_logger(env['run_dir'])
-    logger.info("Starting Baseline 5 Phase B (Group Temporal) Training Pipeline")
+    logger.info("Starting Baseline 5 Phase B Training Pipeline")
 
+    # Dynamic Paths based on environment type
     videos_path = os.path.join(env['dataset_root'], config.data['videos_dir'])
     annot_path = os.path.join(env['annot_dir'], config.data['annot_file'])
     person_weights_path = env['b5_phase_A_model']
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Training on device: {device}")
 
@@ -78,10 +81,9 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_set, batch_size=config.training['batch_size'], shuffle=True,
                               num_workers=env['num_workers'], pin_memory=True)
     val_loader = DataLoader(val_set, batch_size=config.training['batch_size'], shuffle=False,
-                            num_workers=env['num_workers'], pin_memory=True)
+                              num_workers=env['num_workers'], pin_memory=True)
 
     # Load Phase A Model & Weights
-    logger.info(f"Loading Phase A (Person) weights from: {person_weights_path}")
     person_model = Person_Activity_Temporal_Classifier(
         input_size=config.model['input_size'],
         num_classes=config.model['num_person_classes'],
@@ -90,32 +92,30 @@ if __name__ == "__main__":
     )
 
     try:
-        person_model.load_state_dict(torch.load(person_weights_path, map_location=device,weights_only=True))
-        logger.info(f"Successfully loaded Phase A weights from: {person_weights_path}")
+        checkpoint = torch.load(person_weights_path, map_location=device)
+        person_model.load_state_dict(checkpoint['model_state_dict'])
+        print(f"Successfully loaded Phase A weights from: {person_weights_path}")
+
     except FileNotFoundError:
-        logger.error(f"Error: {person_weights_path} not found. You must train Phase A first")
+        print(f"Error: {person_weights_path} not found. You must train Phase A first")
         exit(1)
 
-    # Initialize Phase B Model
-    # Inject the loaded Phase A model into the Group Classifier
+    # Initialize Model, Loss, Optimizer
     model = Group_Activity_Classifier(
         person_feature_extraction=person_model,
         num_classes=config.model['num_classes']
     ).to(device)
-
     print_model_summary(model)
 
     criterion = nn.CrossEntropyLoss()
-
-    # Only pass trainable parameters to the optimizer (Phase A is frozen inside the model)
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = optim.Adam(trainable_params, lr=config.training['learning_rate'])
+    optimizer = optim.AdamW(trainable_params, lr=config.training['learning_rate'],
+                            weight_decay=config.training['weight_decay'])
 
     logger.info("Initializing training loop")
-
     num_epochs = args.epochs if args.epochs else config.training['epochs']
 
-    # Training Loop
+    # Training Model
     best_model = train_and_validate(
         model=model,
         train_loader=train_loader,
@@ -127,8 +127,8 @@ if __name__ == "__main__":
         run_dir=env['run_dir'],
         save_name=config.model['save_name'],
         logger=logger,
-        log_interval=10,
-        class_names=config.model.get('num_classes_label', None)
+        class_names=config.model.get('num_classes_label', None),
+        early_stop_patience=config.training['early_stop_patience'],
     )
 
-    logger.info("Phase B Training Complete!")
+    logger.info("Baseline 5 Phase B Training Complete!")
