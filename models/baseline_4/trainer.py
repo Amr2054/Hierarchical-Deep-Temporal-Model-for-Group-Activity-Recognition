@@ -99,7 +99,7 @@ if __name__ == "__main__":
         save_name=config.model['save_name'],
         logger=logger,
         class_names=config.model.get('num_classes_label', None),
-        early_stop_patience=config.model['early_stop_patience'],
+        early_stop_patience=config.training['early_stop_patience'],
     )
 
     logger.info("Baseline 4 Training Complete.")
