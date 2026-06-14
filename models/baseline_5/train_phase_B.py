@@ -103,7 +103,8 @@ if __name__ == "__main__":
     # Initialize Model, Loss, Optimizer
     model = Group_Activity_Classifier(
         person_feature_extraction=person_model,
-        num_classes=config.model['num_classes']
+        num_classes=config.model['num_classes'],
+        hidden_size=config.model['hidden_size']
     ).to(device)
     print_model_summary(model)
 
