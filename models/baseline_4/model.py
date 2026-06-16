@@ -46,9 +46,9 @@ class Group_Activity_Temporal_Classifier(nn.Module):
         # Input Shape : (batch(seq), 9, 3, 244, 244)
         seq, frame, c,h,w = x.shape
 
-        x_spatial = x.view(seq *frame,c,h,w) # (seq * 9, 3, 244, 244)
+        x_spatial = x.reshape(seq *frame,c,h,w) # (seq * 9, 3, 244, 244)
         x_spatial = self.feature_extractor(x_spatial) # (seq * 9, 2048, 1, 1)
-        x_spatial = x_spatial.view(seq,frame,-1) # (seq,9,2048)
+        x_spatial = x_spatial.reshape(seq,frame,-1) # (seq,9,2048)
 
         x_temporal, (hidden,cell) = self.lstm(x_spatial) # (seq,9,hidden_size)
 

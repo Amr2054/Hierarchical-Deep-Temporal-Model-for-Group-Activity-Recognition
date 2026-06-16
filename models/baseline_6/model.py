@@ -52,11 +52,11 @@ class Group_Activity_Temporal_Classifier(nn.Module):
         batch,player,frame, c,h,w = x.shape
 
         # Merge All for CNN
-        x = x.view(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
+        x = x.reshape(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
 
         # CNN Feature Extraction
         features= self.person_feature_extractor(x) # (batch * 12 * 9, 2048, 1, 1)
-        features = features.view(batch, player, frame, -1) # (batch, 12, 9, 2048)
+        features = features.reshape(batch, player, frame, -1) # (batch, 12, 9, 2048)
 
         # Pool across the Players dimension
         max_pool = torch.max(features, dim=1)[0]  # (batch, 9, 2048)

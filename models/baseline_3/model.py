@@ -47,10 +47,10 @@ class GroupLevelClassifier(nn.Module):
 
     def forward(self, x):
         batch_size, num_players, C, H, W = x.size() # Batch, player, channels, Height, Width
-        x = x.view(batch_size * num_players, C, H, W) # (B*P,C,H,W)
+        x = x.reshape(batch_size * num_players, C, H, W) # (B*P,C,H,W)
         features = self.person_feature_extractor(x) # (B*P,2048,1,1)
 
-        features = features.view(batch_size, num_players, -1) # (B,P,2048)
+        features = features.reshape(batch_size, num_players, -1) # (B,P,2048)
         group_features,_ = torch.max(features,dim=1) # (B,2048)
 
         out = self.fc(group_features) # (B,num_classes)

@@ -41,14 +41,14 @@ class Person_Activity_Temporal_Classifier(nn.Module):
         batch,frame, c,h,w = x.shape
 
         # Merge All for resnet50
-        x = x.view(batch*frame,c,h,w) # (batch * 9, 3, 244, 244)
+        x = x.reshape(batch*frame,c,h,w) # (batch * 9, 3, 244, 244)
 
         # resnet50 Feature Extraction
         features= self.feature_extractor(x) # (batch * 9, 2048, 1, 1)
-        features = features.view(batch * frame, -1) # (batch * 9, 2048)
+        features = features.reshape(batch * frame, -1) # (batch * 9, 2048)
 
         # Group by player for the LSTM
-        features_sequence = features.view(batch,frame,-1) # (batch,9,2048)
+        features_sequence = features.reshape(batch,frame,-1) # (batch,9,2048)
 
         # LSTM over time for each player
         lstm_out, (hidden,cell) = self.lstm(features_sequence) # (batch,9,hidden_size)
@@ -93,11 +93,11 @@ class Group_Activity_Classifier(nn.Module):
         batch,player,frame, c,h,w = x.shape
 
         # Merge All for resnet50
-        x = x.view(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
+        x = x.reshape(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
 
         # resnet50 Feature Extraction
         features= self.feature_extractor(x) # (batch * 12 * 9, 2048, 1, 1)
-        features_sequence = features.view(batch * player,frame, -1) # (batch * 12, 9, 2048)
+        features_sequence = features.reshape(batch * player,frame, -1) # (batch * 12, 9, 2048)
 
         # LSTM over time for each player
         lstm_out, (hidden,cell) = self.lstm(features_sequence) # (batch*12,9,hidden_size)
@@ -107,7 +107,7 @@ class Group_Activity_Classifier(nn.Module):
         center_cnn_feature = features_sequence[:, 4, :]  # (batch*12, 2048)
 
         combined_features = torch.cat([final_lstm_out, center_cnn_feature], dim=1)  # (batch*12, 2048 + Hidden)
-        player_combined_features = combined_features.view(batch,player,-1) # (batch,12,Hidden+2048)
+        player_combined_features = combined_features.reshape(batch,player,-1) # (batch,12,Hidden+2048)
 
         max_pooled = torch.max(player_combined_features, dim=1)[0]
         mean_pooled = torch.mean(player_combined_features, dim=1)

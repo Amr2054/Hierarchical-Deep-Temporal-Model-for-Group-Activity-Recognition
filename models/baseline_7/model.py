@@ -61,18 +61,18 @@ class Full_Hierarchical_Model(nn.Module):
         batch,player,frame, c,h,w = x.shape
 
         # Merge All for CNN
-        x = x.view(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
+        x = x.reshape(batch*player*frame,c,h,w) # (batch * 12 * 9, 3, 244, 244)
 
         # CNN Feature Extraction
         cnn_features= self.person_feature_extractor(x) # (batch * 12 * 9, 2048, 1, 1)
-        cnn_features = cnn_features.view(batch * player,frame, -1) # (batch * 12 , 9, 2048)
+        cnn_features = cnn_features.reshape(batch * player,frame, -1) # (batch * 12 , 9, 2048)
 
         # LSTM over time for each player
         lstm_out_1, (hidden,cell) = self.lstm_1(cnn_features) # (batch*12,9,hidden_size)
 
         # Person Spatial Anchor (Concat CNN + LSTM 1 for EVERY frame)
         combined_person_features = torch.cat([lstm_out_1,cnn_features],dim=2) # (batch*12, 9, input_size + hidden_1_size)
-        combined_person_features = combined_person_features.view(batch,player,frame,-1) # (batch,12,9,hidden_size)
+        combined_person_features = combined_person_features.reshape(batch,player,frame,-1) # (batch,12,9,hidden_size)
 
         # FRAME-BY-FRAME POOLING
         max_pool = torch.max(combined_person_features, dim=1)[0]  # (batch, 9, 2304)
