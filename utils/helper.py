@@ -33,9 +33,9 @@ def set_seed(seed=42):
     torch.backends.cudnn.benchmark = False
     print(f"Random seed set to {seed}")
 
-def setup_logger(run_dir):
+def setup_logger(run_dir,mode: str = "training"):
     """Creates a text file that records every print statement."""
-    log_file = os.path.join(run_dir, 'training.log')
+    log_file = os.path.join(run_dir, mode+".log")
     formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
     logger = logging.getLogger('training_logger')

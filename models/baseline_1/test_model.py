@@ -34,7 +34,7 @@ if __name__ == "__main__":
     config = load_config(args.config)
     set_seed(42)
 
-    logger = setup_logger(env['run_dir'])
+    logger = setup_logger(env['run_dir'],mode="test")
     logger.info(" Starting Baseline 1 Test Evaluation Pipeline")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

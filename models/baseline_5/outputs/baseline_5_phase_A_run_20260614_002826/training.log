@@ -1,0 +1,390 @@
+2026-06-14 00:28:26,723 [INFO] Starting Baseline 5 Phase A Training Pipeline
+2026-06-14 00:28:26,960 [INFO] Training on device: cuda
+2026-06-14 00:29:46,034 [INFO] Calculating dynamic class weights from the dataset
+2026-06-14 00:29:46,041 [INFO] Applied Class Weights: [ 1.862  4.784  2.659  5.298  4.958  2.128 17.101  1.202  0.163]
+2026-06-14 00:29:46,043 [INFO] Initializing training loop
+2026-06-14 00:29:46,044 [INFO] All outputs will be saved to: /kaggle/working/Hierarchical-Deep-Temporal-Model-for-Group-Activity-Recognition/models/baseline_5/outputs/baseline_5_phase_A_run_20260614_002826
+2026-06-14 00:29:46,044 [INFO] 
+=============== Epoch 1/15 ===============
+2026-06-14 00:54:29,362 [INFO] Evaluating validation set
+2026-06-14 01:07:53,985 [INFO] Train Loss: 1.2731 | Train Acc: 52.74%
+2026-06-14 01:07:53,985 [INFO] Val Loss:   1.0779 | Val Acc:   57.54%
+2026-06-14 01:07:53,985 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 01:07:54,015 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.26      0.74      0.39      1073
+           1       0.45      0.68      0.54       356
+           2       0.14      0.27      0.19       644
+           3       0.32      0.94      0.48       327
+           4       0.30      0.86      0.44       379
+           5       0.49      0.90      0.64       821
+           6       0.00      0.00      0.00       104
+           7       0.53      0.45      0.49      1442
+           8       0.92      0.55      0.69     10835
+
+    accuracy                           0.58     15981
+   macro avg       0.38      0.60      0.43     15981
+weighted avg       0.75      0.58      0.61     15981
+
+2026-06-14 01:07:54,015 [INFO] ** Validation accuracy improved from 0.00% to 57.54%. Saving model **
+2026-06-14 01:07:55,608 [INFO] 
+=============== Epoch 2/15 ===============
+2026-06-14 01:31:21,308 [INFO] Evaluating validation set
+2026-06-14 01:44:26,674 [INFO] Train Loss: 0.9042 | Train Acc: 63.30%
+2026-06-14 01:44:26,674 [INFO] Val Loss:   0.9715 | Val Acc:   59.15%
+2026-06-14 01:44:26,675 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 01:44:26,702 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.38      0.57      0.46      1073
+           1       0.39      0.91      0.55       356
+           2       0.17      0.52      0.26       644
+           3       0.54      0.88      0.67       327
+           4       0.54      0.69      0.61       379
+           5       0.61      0.87      0.71       821
+           6       0.03      0.23      0.06       104
+           7       0.39      0.57      0.46      1442
+           8       0.93      0.56      0.70     10835
+
+    accuracy                           0.59     15981
+   macro avg       0.44      0.64      0.50     15981
+weighted avg       0.76      0.59      0.63     15981
+
+2026-06-14 01:44:26,702 [INFO] ** Validation accuracy improved from 57.54% to 59.15%. Saving model **
+2026-06-14 01:44:28,530 [INFO] 
+=============== Epoch 3/15 ===============
+2026-06-14 02:08:08,314 [INFO] Evaluating validation set
+2026-06-14 02:21:21,607 [INFO] Train Loss: 0.7541 | Train Acc: 66.16%
+2026-06-14 02:21:21,607 [INFO] Val Loss:   0.8717 | Val Acc:   63.64%
+2026-06-14 02:21:21,607 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 02:21:21,629 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.35      0.73      0.47      1073
+           1       0.53      0.88      0.66       356
+           2       0.23      0.48      0.31       644
+           3       0.72      0.86      0.79       327
+           4       0.85      0.55      0.67       379
+           5       0.65      0.89      0.75       821
+           6       0.06      0.40      0.10       104
+           7       0.43      0.68      0.53      1442
+           8       0.93      0.60      0.73     10835
+
+    accuracy                           0.64     15981
+   macro avg       0.53      0.68      0.56     15981
+weighted avg       0.79      0.64      0.67     15981
+
+2026-06-14 02:21:21,629 [INFO] ** Validation accuracy improved from 59.15% to 63.64%. Saving model **
+2026-06-14 02:21:23,419 [INFO] 
+=============== Epoch 4/15 ===============
+2026-06-14 02:45:10,816 [INFO] Evaluating validation set
+2026-06-14 02:58:08,081 [INFO] Train Loss: 0.6568 | Train Acc: 68.16%
+2026-06-14 02:58:08,082 [INFO] Val Loss:   0.8611 | Val Acc:   59.10%
+2026-06-14 02:58:08,082 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 02:58:08,105 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.39      0.57      0.46      1073
+           1       0.64      0.80      0.71       356
+           2       0.22      0.69      0.33       644
+           3       0.62      0.91      0.74       327
+           4       0.67      0.75      0.71       379
+           5       0.54      0.93      0.68       821
+           6       0.09      0.32      0.14       104
+           7       0.34      0.79      0.47      1442
+           8       0.95      0.52      0.67     10835
+
+    accuracy                           0.59     15981
+   macro avg       0.49      0.70      0.55     15981
+weighted avg       0.78      0.59      0.62     15981
+
+2026-06-14 02:58:08,106 [INFO] No improvement in validation accuracy for 1 consecutive epoch(s).
+2026-06-14 02:58:08,106 [INFO] 
+=============== Epoch 5/15 ===============
+2026-06-14 03:21:24,069 [INFO] Evaluating validation set
+2026-06-14 03:34:33,977 [INFO] Train Loss: 0.5529 | Train Acc: 70.87%
+2026-06-14 03:34:33,977 [INFO] Val Loss:   0.9500 | Val Acc:   62.65%
+2026-06-14 03:34:33,977 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 03:34:34,002 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.41      0.67      0.51      1073
+           1       0.47      0.89      0.62       356
+           2       0.34      0.40      0.37       644
+           3       0.47      0.90      0.62       327
+           4       0.53      0.75      0.62       379
+           5       0.59      0.77      0.67       821
+           6       0.03      0.32      0.06       104
+           7       0.39      0.72      0.51      1442
+           8       0.93      0.59      0.72     10835
+
+    accuracy                           0.63     15981
+   macro avg       0.46      0.67      0.52     15981
+weighted avg       0.77      0.63      0.66     15981
+
+2026-06-14 03:34:34,002 [INFO] No improvement in validation accuracy for 2 consecutive epoch(s).
+2026-06-14 03:34:34,003 [INFO] 
+=============== Epoch 6/15 ===============
+2026-06-14 03:58:16,456 [INFO] Evaluating validation set
+2026-06-14 04:11:30,836 [INFO] Train Loss: 0.4707 | Train Acc: 73.19%
+2026-06-14 04:11:30,836 [INFO] Val Loss:   0.9224 | Val Acc:   62.31%
+2026-06-14 04:11:30,837 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 04:11:30,862 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.38      0.69      0.49      1073
+           1       0.62      0.83      0.71       356
+           2       0.36      0.49      0.42       644
+           3       0.65      0.92      0.76       327
+           4       0.75      0.72      0.73       379
+           5       0.57      0.92      0.70       821
+           6       0.06      0.29      0.10       104
+           7       0.33      0.81      0.46      1442
+           8       0.94      0.56      0.70     10835
+
+    accuracy                           0.62     15981
+   macro avg       0.52      0.69      0.57     15981
+weighted avg       0.78      0.62      0.65     15981
+
+2026-06-14 04:11:30,862 [INFO] No improvement in validation accuracy for 3 consecutive epoch(s).
+2026-06-14 04:11:30,862 [INFO] 
+=============== Epoch 7/15 ===============
+2026-06-14 04:35:04,576 [INFO] Evaluating validation set
+2026-06-14 04:48:13,654 [INFO] Train Loss: 0.3933 | Train Acc: 74.27%
+2026-06-14 04:48:13,654 [INFO] Val Loss:   0.9571 | Val Acc:   69.61%
+2026-06-14 04:48:13,655 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 04:48:13,678 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.44      0.63      0.52      1073
+           1       0.61      0.87      0.72       356
+           2       0.31      0.53      0.39       644
+           3       0.77      0.91      0.83       327
+           4       0.77      0.68      0.72       379
+           5       0.66      0.87      0.75       821
+           6       0.08      0.30      0.12       104
+           7       0.43      0.74      0.54      1442
+           8       0.92      0.69      0.79     10835
+
+    accuracy                           0.70     15981
+   macro avg       0.55      0.69      0.60     15981
+weighted avg       0.78      0.70      0.72     15981
+
+2026-06-14 04:48:13,678 [INFO] ** Validation accuracy improved from 63.64% to 69.61%. Saving model **
+2026-06-14 04:48:15,487 [INFO] 
+=============== Epoch 8/15 ===============
+2026-06-14 05:12:22,105 [INFO] Evaluating validation set
+2026-06-14 05:25:29,591 [INFO] Train Loss: 0.2546 | Train Acc: 81.49%
+2026-06-14 05:25:29,591 [INFO] Val Loss:   1.0053 | Val Acc:   67.82%
+2026-06-14 05:25:29,591 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 05:25:29,614 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.43      0.65      0.52      1073
+           1       0.62      0.86      0.72       356
+           2       0.38      0.53      0.45       644
+           3       0.71      0.89      0.79       327
+           4       0.68      0.76      0.72       379
+           5       0.69      0.86      0.77       821
+           6       0.08      0.30      0.12       104
+           7       0.36      0.81      0.50      1442
+           8       0.93      0.65      0.76     10835
+
+    accuracy                           0.68     15981
+   macro avg       0.54      0.70      0.60     15981
+weighted avg       0.79      0.68      0.70     15981
+
+2026-06-14 05:25:29,615 [INFO] No improvement in validation accuracy for 1 consecutive epoch(s).
+2026-06-14 05:25:29,615 [INFO] 
+=============== Epoch 9/15 ===============
+2026-06-14 05:49:07,870 [INFO] Evaluating validation set
+2026-06-14 06:02:03,957 [INFO] Train Loss: 0.1813 | Train Acc: 84.45%
+2026-06-14 06:02:03,958 [INFO] Val Loss:   1.0852 | Val Acc:   67.08%
+2026-06-14 06:02:03,958 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 06:02:03,981 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.42      0.60      0.50      1073
+           1       0.67      0.81      0.73       356
+           2       0.37      0.52      0.43       644
+           3       0.44      0.94      0.60       327
+           4       0.65      0.74      0.70       379
+           5       0.57      0.92      0.70       821
+           6       0.06      0.35      0.10       104
+           7       0.43      0.74      0.55      1442
+           8       0.92      0.65      0.76     10835
+
+    accuracy                           0.67     15981
+   macro avg       0.51      0.70      0.56     15981
+weighted avg       0.77      0.67      0.70     15981
+
+2026-06-14 06:02:03,981 [INFO] No improvement in validation accuracy for 2 consecutive epoch(s).
+2026-06-14 06:02:03,981 [INFO] 
+=============== Epoch 10/15 ===============
+2026-06-14 06:27:00,764 [INFO] Evaluating validation set
+2026-06-14 06:40:38,836 [INFO] Train Loss: 0.1457 | Train Acc: 86.84%
+2026-06-14 06:40:38,836 [INFO] Val Loss:   1.1816 | Val Acc:   67.76%
+2026-06-14 06:40:38,836 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 06:40:38,859 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.36      0.75      0.48      1073
+           1       0.57      0.86      0.69       356
+           2       0.32      0.49      0.38       644
+           3       0.62      0.91      0.74       327
+           4       0.77      0.70      0.74       379
+           5       0.69      0.86      0.76       821
+           6       0.09      0.25      0.13       104
+           7       0.44      0.72      0.54      1442
+           8       0.92      0.65      0.76     10835
+
+    accuracy                           0.68     15981
+   macro avg       0.53      0.69      0.58     15981
+weighted avg       0.78      0.68      0.70     15981
+
+2026-06-14 06:40:38,859 [INFO] No improvement in validation accuracy for 3 consecutive epoch(s).
+2026-06-14 06:40:38,859 [INFO] 
+=============== Epoch 11/15 ===============
+2026-06-14 07:04:48,304 [INFO] Evaluating validation set
+2026-06-14 07:18:20,501 [INFO] Train Loss: 0.0925 | Train Acc: 91.17%
+2026-06-14 07:18:20,501 [INFO] Val Loss:   1.5178 | Val Acc:   75.00%
+2026-06-14 07:18:20,501 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 07:18:20,528 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.53      0.37      0.44      1073
+           1       0.68      0.84      0.75       356
+           2       0.30      0.68      0.42       644
+           3       0.83      0.81      0.82       327
+           4       0.84      0.65      0.73       379
+           5       0.76      0.86      0.81       821
+           6       0.13      0.16      0.15       104
+           7       0.53      0.64      0.58      1442
+           8       0.88      0.80      0.84     10835
+
+    accuracy                           0.75     15981
+   macro avg       0.61      0.65      0.61     15981
+weighted avg       0.78      0.75      0.76     15981
+
+2026-06-14 07:18:20,528 [INFO] ** Validation accuracy improved from 69.61% to 75.00%. Saving model **
+2026-06-14 07:18:22,365 [INFO] 
+=============== Epoch 12/15 ===============
+2026-06-14 07:42:23,079 [INFO] Evaluating validation set
+2026-06-14 07:55:38,960 [INFO] Train Loss: 0.0709 | Train Acc: 93.15%
+2026-06-14 07:55:38,960 [INFO] Val Loss:   1.5876 | Val Acc:   76.05%
+2026-06-14 07:55:38,960 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 07:55:38,983 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.47      0.53      0.50      1073
+           1       0.76      0.78      0.77       356
+           2       0.41      0.51      0.45       644
+           3       0.78      0.85      0.81       327
+           4       0.80      0.75      0.77       379
+           5       0.80      0.84      0.82       821
+           6       0.14      0.18      0.16       104
+           7       0.50      0.66      0.56      1442
+           8       0.88      0.81      0.84     10835
+
+    accuracy                           0.76     15981
+   macro avg       0.61      0.66      0.63     15981
+weighted avg       0.78      0.76      0.77     15981
+
+2026-06-14 07:55:38,983 [INFO] ** Validation accuracy improved from 75.00% to 76.05%. Saving model **
+2026-06-14 07:55:40,769 [INFO] 
+=============== Epoch 13/15 ===============
+2026-06-14 08:20:03,385 [INFO] Evaluating validation set
+2026-06-14 08:33:13,797 [INFO] Train Loss: 0.0614 | Train Acc: 94.31%
+2026-06-14 08:33:13,797 [INFO] Val Loss:   1.7375 | Val Acc:   76.16%
+2026-06-14 08:33:13,798 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 08:33:13,820 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.48      0.51      0.49      1073
+           1       0.72      0.81      0.76       356
+           2       0.44      0.48      0.46       644
+           3       0.80      0.86      0.83       327
+           4       0.85      0.69      0.76       379
+           5       0.81      0.83      0.82       821
+           6       0.16      0.18      0.17       104
+           7       0.48      0.64      0.55      1442
+           8       0.87      0.82      0.84     10835
+
+    accuracy                           0.76     15981
+   macro avg       0.62      0.65      0.63     15981
+weighted avg       0.78      0.76      0.77     15981
+
+2026-06-14 08:33:13,821 [INFO] ** Validation accuracy improved from 76.05% to 76.16%. Saving model **
+2026-06-14 08:33:15,652 [INFO] 
+=============== Epoch 14/15 ===============
+2026-06-14 08:57:15,225 [INFO] Evaluating validation set
+2026-06-14 09:10:15,071 [INFO] Train Loss: 0.0404 | Train Acc: 96.49%
+2026-06-14 09:10:15,071 [INFO] Val Loss:   1.8773 | Val Acc:   77.85%
+2026-06-14 09:10:15,071 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 09:10:15,096 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.49      0.47      0.48      1073
+           1       0.77      0.78      0.78       356
+           2       0.46      0.51      0.48       644
+           3       0.82      0.85      0.84       327
+           4       0.83      0.73      0.77       379
+           5       0.77      0.85      0.81       821
+           6       0.21      0.17      0.19       104
+           7       0.54      0.64      0.59      1442
+           8       0.87      0.84      0.86     10835
+
+    accuracy                           0.78     15981
+   macro avg       0.64      0.65      0.64     15981
+weighted avg       0.78      0.78      0.78     15981
+
+2026-06-14 09:10:15,096 [INFO] ** Validation accuracy improved from 76.16% to 77.85%. Saving model **
+2026-06-14 09:10:17,002 [INFO] 
+=============== Epoch 15/15 ===============
+2026-06-14 09:34:20,257 [INFO] Evaluating validation set
+2026-06-14 09:47:28,102 [INFO] Train Loss: 0.0333 | Train Acc: 97.35%
+2026-06-14 09:47:28,103 [INFO] Val Loss:   1.9042 | Val Acc:   77.14%
+2026-06-14 09:47:28,103 [INFO] 
+ Validation Metrics Breakdown
+2026-06-14 09:47:28,129 [INFO] 
+              precision    recall  f1-score   support
+
+           0       0.49      0.45      0.47      1073
+           1       0.75      0.81      0.78       356
+           2       0.43      0.52      0.47       644
+           3       0.82      0.85      0.83       327
+           4       0.83      0.71      0.76       379
+           5       0.81      0.83      0.82       821
+           6       0.13      0.20      0.15       104
+           7       0.52      0.65      0.58      1442
+           8       0.87      0.83      0.85     10835
+
+    accuracy                           0.77     15981
+   macro avg       0.63      0.65      0.64     15981
+weighted avg       0.78      0.77      0.78     15981
+
+2026-06-14 09:47:28,129 [INFO] No improvement in validation accuracy for 1 consecutive epoch(s).
+2026-06-14 09:47:28,130 [INFO] 
+============================================================
+2026-06-14 09:47:28,130 [INFO] Training Pipeline Complete!
+2026-06-14 09:47:28,130 [INFO] Best Validation Accuracy: 77.85%
+2026-06-14 09:47:28,130 [INFO] Checkpoint safely stored at:
+   -> /kaggle/working/Hierarchical-Deep-Temporal-Model-for-Group-Activity-Recognition/models/baseline_5/outputs/baseline_5_phase_A_run_20260614_002826/best_baseline5_phase_A.pth
+2026-06-14 09:47:28,130 [INFO] ============================================================
+
+2026-06-14 09:47:28,132 [INFO] Baseline 5 Phase A Training Complete
