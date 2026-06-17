@@ -11,20 +11,21 @@
   <a href="https://arxiv.org/pdf/1607.02643"><em>A Hierarchical Deep Temporal Model for Group Activity Recognition</em></a>
 </p>
 
-<p align="center">
- <img src="assets/demo_GIF.gif" alt="Model Inference Demo" width="80%" />
-</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white" alt="PyTorch">
   <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" alt="Python">
+  <img src="https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white" alt="PyTorch">
 
 [//]: # (  <img src="https://img.shields.io/badge/Kaggle-20BEFF?style=for-the-badge&logo=Kaggle&logoColor=white" alt="Kaggle">)
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+[//]: # (  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">)
 
 [//]: # (  <img src="https://img.shields.io/badge/Best%20Accuracy-91.85%25-brightgreen?style=for-the-badge" alt="Best Accuracy">)
 
 [//]: # (  <img src="https://img.shields.io/badge/vs%20Paper-+9.95%25-blue?style=for-the-badge" alt="vs Paper">)
+</p>
+
+<p align="center">
+ <img src="assets/demo_GIF.gif" alt="Model Inference Demo" width="80%" />
 </p>
 
 ---
