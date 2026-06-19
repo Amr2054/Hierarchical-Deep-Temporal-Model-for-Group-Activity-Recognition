@@ -122,8 +122,18 @@ git clone https://github.com/Amr2054/Group-Activity-Recognition.git
 cd Group-Activity-Recognition
 pip install -r requirements.txt
 ```
+### 2. Environment Configuration
 
-### 2. Dataset Preparation
+This project uses environment variables to seamlessly route dataset and checkpoint paths across local and cloud environments.
+
+Copy the template environment file:
+
+```bash
+cp .env.example .env
+```
+Open the created .env file and populate the variables.
+
+### 3. Dataset Preparation
 
 Download the [Volleyball dataset](https://github.com/mostafa-saad/deep-activity-rec) and place it under `data/`. Then parse the raw annotations into the optimized `.pkl` format:
 
@@ -131,7 +141,7 @@ Download the [Volleyball dataset](https://github.com/mostafa-saad/deep-activity-
 python -m data.data_annot_loader
 ```
 
-### 3. Train a Model
+### 4. Train a Model
 
 Run training scripts from the **root directory** using module execution, passing the corresponding YAML config:
 
@@ -152,13 +162,13 @@ All outputs — `.pth` weights, TensorBoard logs, and confusion matrices — are
 models/baseline_X/outputs/run_[timestamp]/
 ```
 
-### 4. Monitor Training
+### 5. Monitor Training
 
 ```bash
 tensorboard --logdir models/baseline_X/outputs/
 ```
 
-### 5. Evaluate a Checkpoint
+### 6. Evaluate a Checkpoint
 
 ```bash
 python -m models.baseline_8.test_model --config configs/baseline_8.yaml --checkpoint path/to/weights.pth
